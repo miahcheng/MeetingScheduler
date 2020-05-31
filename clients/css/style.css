@@ -1,0 +1,55 @@
+@import url('https://fonts.googleapis.com/css2?family=Lato:wght@700;900&display=swap');
+
+.navbar-brand {
+    font-size: 25px;
+}
+
+.nav-link {
+    font-size: 20px;
+
+}
+
+#intro {
+    justify-content: left;
+    align-items: flex-start;
+}
+
+#pageCards {
+    /* margin: 0; */
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    flex-wrap: nowrap;
+}
+
+.card {
+    margin: 15px;
+}
+
+.lead,
+.title, .card-header {
+    font-family: 'Lato', sans-serif;
+}
+
+.title {
+    font-weight: bold;
+    font-size: 3rem;
+}
+
+#login {
+    left: 45%;
+    transform: translate(-60%, -0%);
+}
+
+.card-header {
+    font-size: 1.75rem;
+}
+
+.loginForm {
+    font-size: 20px;
+}
+
+#signUp {
+    font-size: 16px;
+}
