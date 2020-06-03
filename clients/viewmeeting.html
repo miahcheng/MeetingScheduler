@@ -7,9 +7,7 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
     <link rel="stylesheet" href="css/style.css">
     <title>Info 441 Final Project</title>
-
 </head>
-
 <body>
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <a class="navbar-brand" href="index.html">Who's Free?</a>
@@ -28,17 +26,21 @@
     <main>
         <div class="jumbotron jumbotron-fluid">
             <div class="container" id="intro">
-                <h3 class="title">Show your availability</h3>
-                <!-- <p class="lead">A efficient meeting scheduler, and a way to keep track of your free times</p> -->
+                <h1 class="title">Who's Free?</h1>
+                <p class="lead">A efficient meeting scheduler, and a way to keep track of your free times</p>
             </div>
         </div>
-        <div class="container">
-            <input class="btn btn-primary btn-lg btn-block" id="submit" type="submit" value="Submit Your Free Time">
+        <div class="container" id="content">
+        </div>
+        <hr>
+      </hr>
+        <div class="container" id="submitcon">
+            <input class="btn btn-primary btn-lg btn-block" data-toggle="modal" data-target="#basicExampleModal" id="submitfree" type="submit" value="Find Free Times">
             <div class="row" id="schedule">
             </div>
         </div>
     </main>
-    <script src="js/index.js"></script>
+    <script src="js/meeting.js"></script>
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
