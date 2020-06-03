@@ -5,7 +5,6 @@ const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", 
 let state = {
   selected: new Map(),
 };
-
 function renderOneDay(day) {
   let dayArea = document.createElement("div");
   dayArea.classList.add("day");
@@ -20,7 +19,6 @@ function renderOneDay(day) {
   });
   return dayArea;
 }
-
 function renderOneTime(time, amorpm, day) {
   let oneTime = document.createElement("div");
   oneTime.classList.add("form-group", "form-check");
@@ -61,10 +59,10 @@ function setState(){
   if (state.selected.size === 0){
     newMap();
   }
-  //GET USER
+  //GET USER, set state.selected to GET USER JSON
 }
 function sendState(){
-  //POST /user/id
+  //POST /user/id, send state.selected
 }
 // call the function to render chats
 setState();
