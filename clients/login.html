@@ -6,9 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
         integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
-    <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/css/bootstrap-combined.no-icons.min.css"
+    <!-- <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/css/bootstrap-combined.no-icons.min.css"
         rel="stylesheet">
-    <link href="//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
+    <link href="//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet"> -->
     <link rel="stylesheet" href="css/style.css">
     <title>Info 441 Final Project</title>
 </head>
@@ -35,7 +35,7 @@
                     <div class="card border-dark" id="login">
                         <div class="card-header">Login</div>
                         <div class="card-body text-dark">
-                            <form>
+                            <form id = "loginAll">
                                 <div class="form-group">
                                     <label class="loginForm" for="exampleInputEmail1">Email address</label>
                                     <input type="email" class="form-control input-group-lg" id="exampleInputEmail1"
@@ -46,7 +46,7 @@
                                     <input type="password" class="form-control input-group-lg"
                                         id="exampleInputPassword1">
                                 </div>
-                                <button type="submit" class="btn btn-primary">Submit</button>
+                                <button type="submit" class="btn btn-primary" id="submitLog">Login</button>
                                 <a href="signup.html" class="btn btn-primary">Sign Up Instead</a>
                             </form>
                         </div>
@@ -56,6 +56,7 @@
         </div>
 
     </main>
-</body>
+    <script src="index_anna.js"></script>
+</body> 
 
 </html>
