@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/my/repo/models/users"
-	"github.com/my/repo/sessions"
+	"info441-finalproj/servers/gateway/models/users"
+	"info441-finalproj/servers/gateway/sessions"
 )
 
 // UsersHandler handles requestions for users to

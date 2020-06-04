@@ -3,7 +3,7 @@ package handlers
 import (
 	"time"
 
-	"github.com/my/repo/models/users"
+	"info441-finalproj/servers/gateway/models/users"
 )
 
 // SessionState instantiates the time the Current User begins

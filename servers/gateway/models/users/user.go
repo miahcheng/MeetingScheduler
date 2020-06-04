@@ -1,8 +1,6 @@
 package users
 
 import (
-	"crypto/md5"
-	"encoding/hex"
 	"fmt"
 	"log"
 	"net/mail"
@@ -11,22 +9,23 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-//gravatarBasePhotoURL is the base URL for Gravatar image requests.
-//See https://id.gravatar.com/site/implement/images/ for details
-const gravatarBasePhotoURL = "https://www.gravatar.com/avatar/"
-
 //bcryptCost is the default bcrypt cost to use when hashing passwords
 var bcryptCost = 13
 
 //User represents a user account in the database
 type User struct {
-	ID        int64  `json:"id"`
-	Email     string `json:"-"` //never JSON encoded/decoded
-	PassHash  []byte `json:"-"` //never JSON encoded/decoded
-	UserName  string `json:"userName"`
-	FirstName string `json:"firstName"`
-	LastName  string `json:"lastName"`
-	PhotoURL  string `json:"photoURL"`
+	ID        int64    `json:"id"`
+	Email     string   `json:"-"` //never JSON encoded/decoded
+	PassHash  []byte   `json:"-"` //never JSON encoded/decoded
+	FirstName string   `json:"firstName"`
+	LastName  string   `json:"lastName"`
+	Sunday    []string `json:"sunday"`
+	Monday    []string `json:"monday"`
+	Tuesday   []string `json:"tuesday"`
+	Wednesday []string `json:"wednesday"`
+	Thursday  []string `json:"thursday"`
+	Friday    []string `json:"friday"`
+	Saturday  []string `json:"saturday"`
 }
 
 //Credentials represents user sign-in credentials
@@ -37,18 +36,31 @@ type Credentials struct {
 
 //NewUser represents a new user signing up for an account
 type NewUser struct {
-	Email        string `json:"email"`
-	Password     string `json:"password"`
-	PasswordConf string `json:"passwordConf"`
-	UserName     string `json:"userName"`
-	FirstName    string `json:"firstName"`
-	LastName     string `json:"lastName"`
+	Email        string   `json:"email"`
+	Password     string   `json:"password"`
+	PasswordConf string   `json:"passwordConf"`
+	FirstName    string   `json:"firstName"`
+	LastName     string   `json:"lastName"`
+	Sunday       []string `json:"sunday"`
+	Monday       []string `json:"monday"`
+	Tuesday      []string `json:"tuesday"`
+	Wednesday    []string `json:"wednesday"`
+	Thursday     []string `json:"thursday"`
+	Friday       []string `json:"friday"`
+	Saturday     []string `json:"saturday"`
 }
 
 //Updates represents allowed updates to a user profile
 type Updates struct {
-	FirstName string `json:"firstName"`
-	LastName  string `json:"lastName"`
+	FirstName string   `json:"firstName"`
+	LastName  string   `json:"lastName"`
+	Sunday    []string `json:"sunday"`
+	Monday    []string `json:"monday"`
+	Tuesday   []string `json:"tuesday"`
+	Wednesday []string `json:"wednesday"`
+	Thursday  []string `json:"thursday"`
+	Friday    []string `json:"friday"`
+	Saturday  []string `json:"saturday"`
 }
 
 //Validate validates the new user and returns an error if
@@ -66,20 +78,11 @@ func (nu *NewUser) Validate() error {
 	if nu.Password != nu.PasswordConf {
 		return fmt.Errorf("Invalid Conf Password: Confirmation password does not match password")
 	}
-
-	if len(nu.UserName) == 0 {
-		return fmt.Errorf("Invalid Username: username needs to be at least 1 character")
-	}
-
-	if strings.ContainsAny(nu.UserName, " ") {
-		return fmt.Errorf("Invalid Username: Username cannot have spaces")
-	}
-
 	return nil
 }
 
 //ToUser converts the NewUser to a User, setting the
-//PhotoURL and PassHash fields appropriately
+//PassHash fields appropriately
 func (nu *NewUser) ToUser() (*User, error) {
 	valErr := nu.Validate()
 	if valErr != nil {
@@ -88,14 +91,9 @@ func (nu *NewUser) ToUser() (*User, error) {
 	email := nu.Email
 	email = strings.TrimSpace(email)
 	email = strings.ToLower(email)
-	hash := md5.New()
-	hash.Write([]byte(email))
-	hashEmail := hex.EncodeToString(hash.Sum(nil))
-
-	pURL := gravatarBasePhotoURL + hashEmail
 	// SetPassword(usr.PassHash)
-	usr := &User{Email: nu.Email, UserName: nu.UserName, FirstName: nu.FirstName,
-		LastName: nu.LastName, PhotoURL: pURL}
+	usr := &User{Email: nu.Email, FirstName: nu.FirstName,
+		LastName: nu.LastName}
 	usr.SetPassword(nu.Password)
 	return usr, nil
 }

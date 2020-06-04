@@ -40,14 +40,14 @@ type SQLStore struct {
 
 // GetByID gets the User by given ID value
 func (database SQLStore) GetByID(ID int64) (*User, error) {
-	info, err := database.Db.Query("SELECT ID, Email, PassHash, UserName, FirstName, LastName, PhotoURL FROM Users WHERE ID = ?", ID)
+	info, err := database.Db.Query("SELECT ID, Email, PassHash, UserName, FirstName, LastName, FROM Users WHERE ID = ?", ID)
 	if err != nil {
 		return nil, ErrUserNotFound
 	}
 	usr := User{}
 	for info.Next() {
-		scanErr := info.Scan(&usr.ID, &usr.Email, &usr.PassHash, &usr.UserName, &usr.FirstName,
-			&usr.LastName, &usr.PhotoURL)
+		scanErr := info.Scan(&usr.ID, &usr.Email, &usr.PassHash, &usr.FirstName,
+			&usr.LastName)
 		if scanErr != nil {
 			return nil, scanErr
 		}
@@ -58,37 +58,18 @@ func (database SQLStore) GetByID(ID int64) (*User, error) {
 
 // GetByEmail gets the User by given email value
 func (database SQLStore) GetByEmail(email string) (*User, error) {
-	info, err := database.Db.Query("SELECT ID, Email, PassHash, UserName, FirstName, LastName, PhotoURL FROM Users WHERE Email = ?", email)
+	info, err := database.Db.Query("SELECT ID, Email, PassHash, UserName, FirstName, LastName, FROM Users WHERE Email = ?", email)
 	if err != nil {
 		return nil, fmt.Errorf("unexpected error querying db: %v", err)
 	}
 	usr := User{}
 	for info.Next() {
-		scanErr := info.Scan(&usr.ID, &usr.Email, &usr.PassHash, &usr.UserName, &usr.FirstName, &usr.LastName,
-			&usr.PhotoURL)
+		scanErr := info.Scan(&usr.ID, &usr.Email, &usr.PassHash, &usr.FirstName, &usr.LastName)
 		if scanErr != nil {
 			return nil, scanErr
 		}
 	}
 	usr.Email = email
-	return &usr, nil
-}
-
-// GetByUserName returns user with same username
-func (database SQLStore) GetByUserName(username string) (*User, error) {
-	info, err := database.Db.Query("SELECT ID, Email, PassHash, UserName, FirstName, LastName, PhotoURL FROM Users WHERE UserName = ?", username)
-	if err != nil {
-		return nil, ErrUserNotFound
-	}
-	usr := User{}
-	for info.Next() {
-		scanErr := info.Scan(&usr.ID, &usr.Email, &usr.PassHash, &usr.UserName, &usr.FirstName, &usr.LastName,
-			&usr.PhotoURL)
-		if scanErr != nil {
-			return nil, scanErr
-		}
-	}
-	usr.UserName = username
 	return &usr, nil
 }
 
@@ -98,24 +79,30 @@ func (database SQLStore) Insert(user *User) (*User, error) {
 	if errTR != nil {
 		return nil, fmt.Errorf("Error beginning transaction: %v", errTR)
 	}
-	insertQ := "INSERT INTO Users(Email, PassHash, UserName, FirstName, LastName, PhotoURL) VALUES (?,?,?,?,?,?)"
+	insertQ := "INSERT INTO Users(Email, PassHash, UserName, FirstName, LastName) VALUES (?,?,?,?,?,?)"
 	q, errQ := trx.Prepare(insertQ)
 	if errQ != nil {
 		return InvalidUser, fmt.Errorf("error preparing")
 	}
 	defer q.Close()
-	result, err := q.Exec(user.Email, user.PassHash, user.UserName,
-		user.FirstName, user.LastName, user.PhotoURL)
+	result, err := q.Exec(user.Email, user.PassHash, user.FirstName, user.LastName)
 	if err != nil {
 		trx.Rollback()
 		return InvalidUser, fmt.Errorf("Error inserting row")
 	}
-	newID, idErr := result.LastInsertId()
+	id, idErr := result.LastInsertId()
 	if idErr != nil {
 		return InvalidUser, fmt.Errorf("Error getting new ID: %v", idErr)
 	}
-
-	user.ID = newID
+	// refactor this
+	InsertByDay(database, trx, 1, user.Sunday, id)
+	InsertByDay(database, trx, 2, user.Monday, id)
+	InsertByDay(database, trx, 3, user.Tuesday, id)
+	InsertByDay(database, trx, 4, user.Wednesday, id)
+	InsertByDay(database, trx, 5, user.Thursday, id)
+	InsertByDay(database, trx, 6, user.Friday, id)
+	InsertByDay(database, trx, 7, user.Saturday, id)
+	user.ID = id
 	trx.Commit()
 	return user, nil
 }
@@ -181,6 +168,26 @@ func (database SQLStore) Delete(ID int64) error {
 	_, err := database.Db.Exec(deleteQ, ID)
 	if err != nil {
 		return errors.New("Error Deleting User")
+	}
+	return nil
+}
+
+func InsertByDay(db SQLStore, trans *sql.Tx, dayID int, times []string, userID int64) error {
+	for _, time := range times {
+		timeID, err := db.Db.Query("SELECT TimeID FROM [Time] WHERE TimeRange = ?", time)
+		if err != nil {
+			return err
+		}
+		insQ := "INSERT INTO UserTimes(DayID, TimeID, UserID) VALUES(?, ?, ?)"
+		q, qerr := trans.Prepare(insQ)
+		if qerr != nil {
+			return qerr
+		}
+		defer q.Close()
+		_, serr := q.Exec(dayID, timeID, userID)
+		if serr != nil {
+			return serr
+		}
 	}
 	return nil
 }
