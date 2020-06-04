@@ -2,6 +2,7 @@ package meetings
 
 import (
 	"encoding/json"
+	"fmt"
 	"info441-finalproj/servers/gateway/models/users"
 	"io/ioutil"
 	"net/http"
@@ -130,13 +131,13 @@ func (c *Context) SpecificMeetingHandler(w http.ResponseWriter, r *http.Request)
 		if len(weeks) > 0 {
 			firstUser := weeks[0]
 			for i := 1; i < len(weeks); i++ {
-				firstUser.Sunday = intersect.Hash(firstUser.Sunday, weeks[i].Sunday).([]string)
-				firstUser.Monday = intersect.Hash(firstUser.Monday, weeks[i].Monday).([]string)
-				firstUser.Tuesday = intersect.Hash(firstUser.Tuesday, weeks[i].Tuesday).([]string)
-				firstUser.Wednesday = intersect.Hash(firstUser.Wednesday, weeks[i].Wednesday).([]string)
-				firstUser.Thursday = intersect.Hash(firstUser.Thursday, weeks[i].Thursday).([]string)
-				firstUser.Friday = intersect.Hash(firstUser.Friday, weeks[i].Friday).([]string)
-				firstUser.Saturday = intersect.Hash(firstUser.Saturday, weeks[i].Saturday).([]string)
+				firstUser.Sunday = InterfaceToString(intersect.Hash(firstUser.Sunday, weeks[i].Sunday))
+				firstUser.Monday = InterfaceToString(intersect.Hash(firstUser.Monday, weeks[i].Monday))
+				firstUser.Tuesday = InterfaceToString(intersect.Hash(firstUser.Tuesday, weeks[i].Tuesday))
+				firstUser.Wednesday = InterfaceToString(intersect.Hash(firstUser.Wednesday, weeks[i].Wednesday))
+				firstUser.Thursday = InterfaceToString(intersect.Hash(firstUser.Thursday, weeks[i].Thursday))
+				firstUser.Friday = InterfaceToString(intersect.Hash(firstUser.Friday, weeks[i].Friday))
+				firstUser.Saturday = InterfaceToString(intersect.Hash(firstUser.Saturday, weeks[i].Saturday))
 			}
 			result.Sunday = firstUser.Sunday
 			result.Monday = firstUser.Monday
@@ -217,4 +218,12 @@ func CheckAuth(w http.ResponseWriter, r *http.Request, c *Context) {
 		json.Unmarshal([]byte(r.Header.Get("X-User")), userInfo)
 		c.UserID = userInfo.ID
 	}
+}
+
+func InterfaceToString(interfaces []interface{}) []string {
+	strings := make([]string, 0)
+	for _, i := range interfaces {
+		strings = append(strings, fmt.Sprintf("%v", i))
+	}
+	return strings
 }
