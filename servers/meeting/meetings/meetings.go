@@ -22,6 +22,29 @@ func (c *Context) MeetingsHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Request body could not be read", http.StatusBadRequest)
 			return
 		}
+		r.Body.Close()
+		meeting := Meeting{}
+		json.Unmarshal(data, &meeting)
+		insq := "INSERT INTO Meeting(CreatorID, MeetingName, MeetingDesc) VALUES(?, ?, ?)"
+		res, err := c.CalendarStore.Exec(insq, meeting.CreatorID, meeting.MeetingName, meeting.MeetingDesc)
+		if err != nil {
+			http.Error(w, "Error with connecting to database", http.StatusInternalServerError)
+			return
+		}
+		cid, err := res.LastInsertId()
+		if err != nil {
+			http.Error(w, "Could not insert into database", http.StatusInternalServerError)
+			return
+		}
+		if len(meeting.Members) > 0 {
+			for _, member := range meeting.Members {
+				query := "INSERT INTO MeetingMembers(UserID, MeetingID) VALUES(?, ?"
+				c.CalendarStore.Exec(query, member, cid)
+			}
+		}
+		w.Header().Set("Content-Type", "text/html")
+		w.WriteHeader(http.StatusCreated)
+		w.Write([]byte("Meeting created successfully"))
 	} else {
 		http.Error(w, "Method must be POST", http.StatusMethodNotAllowed)
 	}
