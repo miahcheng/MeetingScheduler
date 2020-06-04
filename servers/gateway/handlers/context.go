@@ -1,8 +1,8 @@
 package handlers
 
 import (
-	"github.com/my/repo/models/users"
-	"github.com/my/repo/sessions"
+	"info441-finalproj/servers/gateway/models/users"
+	"info441-finalproj/servers/gateway/sessions"
 )
 
 // HandlerContext holds and shares the SigningKey,
