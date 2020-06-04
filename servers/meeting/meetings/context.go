@@ -27,6 +27,7 @@ type Meeting struct {
 }
 
 type Holder struct {
+	userID     int64
 	dayID      int64
 	timeString string
 }
