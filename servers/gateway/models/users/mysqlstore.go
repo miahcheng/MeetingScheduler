@@ -94,6 +94,7 @@ func (database SQLStore) Insert(user *User) (*User, error) {
 	if idErr != nil {
 		return InvalidUser, fmt.Errorf("Error getting new ID: %v", idErr)
 	}
+	// refactor this
 	InsertByDay(database, trx, 1, user.Sunday, id)
 	InsertByDay(database, trx, 2, user.Monday, id)
 	InsertByDay(database, trx, 3, user.Tuesday, id)
