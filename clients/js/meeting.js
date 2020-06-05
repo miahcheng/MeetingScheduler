@@ -2,7 +2,8 @@ let state = {
   meetings: new Map(),
   // key would be meetingID, holds struct:
   // {creatorID, members, meeting desc}
-  toDisplay: null
+  toDisplay: null,
+  auth: ""
 };
 const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 let testing = {
@@ -30,14 +31,55 @@ let testing1 = {
   })
 }
 function setState(){
+  state.auth = sessionStorage.getItem('auth');
+  console.log(state.auth);
+  if (state.selected.size === 0){
+    newMap();
+  }
+  //GET USER, set state.selected to GET USER JSON
+  fetch(base + "/user/",
+      {
+          method: "GET",
+          body: "",
+          headers: new Headers({
+              "Authentication":state.auth,
+          })
+      }
+  ).then(response => {
+      let user = JSON.parse(response);
+      let meetings = user.Meetings
+  })
   //Get user
   //Get meetingID
-  state.meetings.set(testing.meetingID, {creatorID:testing.creatorID, members:testing.members, meetingtitle:testing.meetingtitle, meetingdesc:testing.meetingdesc, freeTime: testing.freeTime});
-  state.meetings.set(testing1.meetingID, {creatorID:testing1.creatorID, members:testing1.members, meetingtitle:testing1.meetingtitle, meetingdesc:testing1.meetingdesc, freeTime: testing1.freeTime});
+  meetings.forEach(function(id){
+    fetch(base + "/meeting/" + parseInt(id),
+        {
+            method: "GET",
+            body: "",
+            headers: new Headers({
+                "Authentication":state.auth,
+            })
+        }
+    ).then(response => {
+      state.meetings.set(id, JSON.parse(response));
+    })
+  });
 }
 function sendState(toSend){
-  //Post meetingID
-  testing.members = [1,2,3,4];
+  toSend.forEach(funtion(email){
+    fetch(base + "/meeting/" + parseInt(state.toDisplay),
+        {
+            method: "POST",
+            body: email,
+            headers: new Headers({
+              "Content-Type": "application/json",
+              "Authentication":state.auth,
+            })
+        }
+    ).then(response => {
+
+    })
+  })
 }
 function renderMeetingList(){
   document.getElementById("submitcon").style.display = "none";
@@ -183,7 +225,7 @@ function renderUserPopUp(){
   m3.appendChild(m6);
   m3.appendChild(m7);
   m2.appendChild(m3);
-  m1.appendChild(m2)
+  m1.appendChild(m2);
   let cont = document.querySelector("#submitcon");
   cont.appendChild(m1);
 }
@@ -241,9 +283,9 @@ function renderTimePopUp(){
   m3.appendChild(m6);
   m3.appendChild(m7);
   m2.appendChild(m3);
-  m1.appendChild(m2)
+  m1.appendChild(m2);
   let cont = document.querySelector("#submitcon");
   cont.appendChild(m1);
 }
-//renderOneMeeting();
+state.auth = sessionStorage.getItem('auth');
 renderMeetingList();

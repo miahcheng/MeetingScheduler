@@ -1,7 +1,8 @@
 'use strict';
 
 let state = {
-    auth: ""
+    auth: "",
+    testing: "1"
 };
 
 const base = "https://api.blah.com";
@@ -14,12 +15,12 @@ function loginUser() {
     // let form = document.getElementById("loginAll");
     let email = document.getElementById("exampleInputEmail1").value;
     let pass = document.getElementById("exampleInputPassword1").value;
-    fetch(base + sessions, 
+    fetch(base + sessions,
         {
             method: "POST",
             body: JSON.stringify({
                 Email: email,
-                Password: pass 
+                Password: pass
             }),
             headers: new Headers({
                 "Content-Type": "application/json",
@@ -45,6 +46,7 @@ document.getElementById("submitLog").addEventListener("click", (event) => {
     console.log(document.getElementById("exampleInputEmail1").value);
     console.log(document.getElementById("exampleInputPassword1").value);
     loginUser();
+    sessionStorage.setItem(auth, '1');
     window.location.href="index.html";
 });
 
@@ -84,6 +86,7 @@ function createNewUser() {
 document.getElementById("submitNUser").addEventListener("click", (event) => {
     event.preventDefault();
     createNewUser();
+    exports.auth = state.auth;
     window.location.href="index.html";
 })
 
@@ -117,4 +120,3 @@ document.getElementById("newMeet").addEventListener("click", function(event) {
         window.alert("New Meeting Created!");
     })
 });
-
