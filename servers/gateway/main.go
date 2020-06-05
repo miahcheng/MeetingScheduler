@@ -85,6 +85,7 @@ func main() {
 
 	mux.HandleFunc("/users", handler.UsersHandler)
 	mux.HandleFunc("/sessions", handler.SessionsHandler)
+	mux.HandleFunc("/getuser/", handler.GetUserInfoHandler)
 	mux.Handle("/meeting", meetingProxy)
 	mux.Handle("/meeting/", meetingProxy)
 	mux.Handle("/user/", meetingProxy)
