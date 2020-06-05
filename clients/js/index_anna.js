@@ -42,6 +42,7 @@ function loginUser() {
         console.log(token);
         // state.auth = token[0];
         sessionStorage.setItem("auth", token);
+        // window.location.href="index.html";
     }
     )
 }
@@ -53,7 +54,7 @@ document.getElementById("submitLog").addEventListener("click", (event) => {
     console.log(document.getElementById("exampleInputPassword1").value);
     loginUser();
     // sessionStorage.setItem(auth, '1');
-    window.location.href="index.html";
+    // window.location.href="index.html";
 });
 
 // creates json for new user
@@ -81,6 +82,7 @@ function createNewUser() {
             console.log(response);
             return
         }
+        console.log(response);
         // let token = [];
         // token = response.headers.get("Authorization").split(" ");
         // state.auth = token;
@@ -94,7 +96,7 @@ document.getElementById("submitNUser").addEventListener("click", (event) => {
     event.preventDefault();
     createNewUser();
     exports.auth = state.auth;
-    window.location.href="index.html";
+    // window.location.href="index.html";
 })
 
 // click event for creating the new meeting
