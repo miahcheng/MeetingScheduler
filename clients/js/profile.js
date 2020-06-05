@@ -1,6 +1,7 @@
 `use strict`;
 
 const base = "https://api.jimhua32.me";
+console.log(sessionStorage.getItem("auth"));
 
 fetch(base + "/user/",
     {
