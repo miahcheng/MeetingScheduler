@@ -73,6 +73,10 @@ function setState(){
           })
       }
   ).then(response => {
+    if (response.status == 400 || response.status == 405 || response.status == 401) {
+      console.log("error getting user free times/schedule");
+      console.log(response);
+    }
       let user = JSON.parse(response);
       days.forEach(function(day){
         user.set(day, user.${day})
