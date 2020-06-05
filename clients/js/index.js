@@ -33,6 +33,12 @@ function renderOneTime(time, amorpm, day) {
     parsedTime = parseInt(parsedTime) + 1200;
     parsedTime = parsedTime.toString();
   }
+  if (parsedTime === "1200" && amorpm === "AM"){
+    parsedTime = "0000";
+  }
+  if (parsedTime.length === 3){
+    parsedTime = "0"+parsedTime;
+  }
   check.id = day + ":" + parsedTime;
   if (state.selected.get(day).includes(parsedTime)){
     check.checked = true;
@@ -67,10 +73,9 @@ function setState(){
   fetch(base + "/user/",
       {
           method: "GET",
-          body: "",
-          headers: new Headers({
+          headers: {
               "Authentication":state.auth,
-          })
+          }
       }
   ).then(response => {
     if (response.status == 400 || response.status == 405 || response.status == 401) {
@@ -79,7 +84,7 @@ function setState(){
     }
       let user = JSON.parse(response);
       days.forEach(function(day){
-        user.set(day, user.${day})
+        user.set(day, user[day])
       });
   })
 }

@@ -5,7 +5,9 @@ let state = {
   toDisplay: null,
   auth: ""
 };
+state.auth = sessionStorage.getItem("auth");
 const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const base = "https://api.jimhua32.me";
 let testing = {
   meetingID: 1,
   creatorID: 3,
@@ -34,32 +36,30 @@ let testing1 = {
 function setState() {
   state.auth = sessionStorage.getItem("auth");
   console.log(state.auth);
-  if (state.selected.size === 0) {
-    newMap();
-  }
-  fetch(base + "/user/", {
-    method: "GET",
-    body: "",
-    headers: new Headers({
-      "Authentication": state.auth,
-    })
-  }).then(response => {
+  fetch(base + "/user/",
+      {
+          method: "GET",
+          headers: {
+              "Authorization": sessionStorage.getItem("auth"),
+          }
+      }
+  ).then(response => {
     if (response.status == 400 || response.status == 405 || response.status == 401) {
       console.log("Error getting user information");
       console.log(response);
     }
-    let user = JSON.parse(response);
+    let user = response;
     let meetings = user.Meetings
   })
   //Get user
   //Get meetingID
-  meetings.forEach(function (id) {
+  state.meetings.forEach(function (id) {
     fetch(base + "/meeting/" + parseInt(id), {
       method: "GET",
       body: "",
-      headers: new Headers({
+      headers: {
         "Authentication": state.auth,
-      })
+      }
     }).then(response => {
       if (response.status == 401 || response.status == 405) {
         console.log("Error getting meeting information");
@@ -75,10 +75,10 @@ function sendState(toSend) {
     fetch(base + "/meeting/" + parseInt(state.toDisplay), {
       method: "POST",
       body: email,
-      headers: new Headers({
+      headers: {
         "Content-Type": "application/json",
         "Authentication": state.auth,
-      })
+      }
     }).then(response => {
         if (response.status === 415 || response.status === 401 || response.status === 405) {
           console.log("error adding user to meeting");
@@ -298,5 +298,4 @@ function renderTimePopUp() {
   let cont = document.querySelector("#submitcon");
   cont.appendChild(m1);
 }
-state.auth = sessionStorage.getItem('auth');
 renderMeetingList();
