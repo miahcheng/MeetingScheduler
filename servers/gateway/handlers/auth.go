@@ -167,3 +167,46 @@ func (handler *Handler) SpecificSessionHandler(w http.ResponseWriter, r *http.Re
 	}
 	w.Write([]byte("signed out"))
 }
+
+func (handler *Handler) GetUserInfoHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "GET" {
+		http.Error(w, "Method must be GET", http.StatusMethodNotAllowed)
+		return
+	}
+	state := &SessionState{}
+	_, sessionErr := sessions.GetState(r, handler.SessionKey, handler.SessionStore, state)
+	if sessionErr != nil {
+		http.Error(w, "Current user is not authenticated", http.StatusUnauthorized)
+		return
+	}
+	idString := path.Base(r.URL.Path)
+	temp, idErr := strconv.Atoi(idString)
+	if idErr != nil {
+		http.Error(w, "Passed ID was not a valid ID", http.StatusBadRequest)
+		return
+	}
+	id := int64(temp)
+	user, err := handler.UserStore.GetByID(id)
+	if err != nil {
+		http.Error(w, "Could not find user", http.StatusBadRequest)
+	}
+	userInfo := &struct {
+		id        int64
+		Email     string
+		FirstName string
+		LastName  string
+	}{
+		user.ID,
+		user.Email,
+		user.FirstName,
+		user.LastName,
+	}
+	json, jsonErr := json.Marshal(userInfo)
+	if jsonErr != nil {
+		http.Error(w, "Issue with encoding JSON", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	w.Write(json)
+}
