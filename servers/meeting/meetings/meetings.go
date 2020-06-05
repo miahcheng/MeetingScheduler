@@ -7,9 +7,8 @@ import (
 	"info441-finalproj/servers/gateway/models/users"
 	"io/ioutil"
 	"net/http"
-	"path"
-	"strconv"
 
+	"github.com/gorilla/mux"
 	"github.com/juliangruber/go-intersect"
 )
 
@@ -41,12 +40,13 @@ func (c *Context) MeetingsHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Could not insert into database", http.StatusInternalServerError)
 			return
 		}
+		query := "INSERT INTO MeetingMembers(UserID, MeetingID) VALUES(?, ?)"
 		if len(meeting.Members) > 0 {
 			for _, member := range meeting.Members {
-				query := "INSERT INTO MeetingMembers(UserID, MeetingID) VALUES(?, ?)"
 				c.CalendarStore.Exec(query, member, cid)
 			}
 		}
+		c.CalendarStore.Exec(query, c.UserID, cid)
 		w.Header().Set("Content-Type", "text/html")
 		w.WriteHeader(http.StatusCreated)
 		w.Write([]byte("Meeting created successfully"))
@@ -61,11 +61,35 @@ func (c *Context) SpecificUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if r.Method == "GET" {
+		user := &User{}
 		ws, err := c.GetUserTimes(c.UserID, w)
 		if err != nil {
 			return
 		}
-		weekJSON, jsonErr := json.Marshal(ws)
+		user.Week = ws
+		row := c.CalendarStore.QueryRow("SELECT Email, FirstName, LastName FROM Users WHERE UserID = ?", c.UserID)
+		userErr := row.Scan(&user.Email, &user.FirstName, &user.LastName)
+		if userErr != nil {
+			http.Error(w, "Could not get user", http.StatusInternalServerError)
+			return
+		}
+		meetings, meetErr := c.CalendarStore.Query("SELECT MeetingID FROM MeetingMembers WHERE UserID = ?", c.UserID)
+		if meetErr != nil {
+			http.Error(w, "Could not get meetings", http.StatusInternalServerError)
+			return
+		}
+		meetingToAdd := make([]int64, 0)
+		for meetings.Next() {
+			holder := &Holder{}
+			err := meetings.Scan(&holder.meetingID)
+			if err != nil {
+				http.Error(w, "Problem occurred when getting meetings", http.StatusInternalServerError)
+				return
+			}
+			meetingToAdd = append(meetingToAdd, holder.meetingID)
+		}
+		user.Meetings = meetingToAdd
+		weekJSON, jsonErr := json.Marshal(user)
 		if jsonErr != nil {
 			http.Error(w, "Data could not be returned", http.StatusInternalServerError)
 			return
@@ -88,13 +112,13 @@ func (c *Context) SpecificUserHandler(w http.ResponseWriter, r *http.Request) {
 		json.Unmarshal(data, &tempWeek)
 		delete := "DELETE FROM UserTimes WHERE UserID = ?"
 		c.CalendarStore.Exec(delete, c.UserID)
-		c.InsertHelper(tempWeek.Sunday, 1, w)
-		c.InsertHelper(tempWeek.Monday, 2, w)
-		c.InsertHelper(tempWeek.Tuesday, 3, w)
-		c.InsertHelper(tempWeek.Wednesday, 4, w)
-		c.InsertHelper(tempWeek.Thursday, 5, w)
-		c.InsertHelper(tempWeek.Friday, 6, w)
-		c.InsertHelper(tempWeek.Saturday, 7, w)
+		c.InsertHelper(tempWeek.Sunday, "Sunday", w)
+		c.InsertHelper(tempWeek.Monday, "Monday", w)
+		c.InsertHelper(tempWeek.Tuesday, "Tuesday", w)
+		c.InsertHelper(tempWeek.Wednesday, "Wednesday", w)
+		c.InsertHelper(tempWeek.Thursday, "Thursday", w)
+		c.InsertHelper(tempWeek.Friday, "Friday", w)
+		c.InsertHelper(tempWeek.Saturday, "Saturday", w)
 
 		ws, err := c.GetUserTimes(c.UserID, w)
 		if err != nil {
@@ -119,16 +143,14 @@ func (c *Context) SpecificMeetingHandler(w http.ResponseWriter, r *http.Request)
 	if err != nil {
 		return
 	}
-	meetingID, idErr := strconv.Atoi(path.Base(r.URL.Path))
-	if idErr != nil {
-		http.Error(w, "Invalid ID passed, cannot parse", http.StatusBadRequest)
-	}
+	vars := mux.Vars(r)
+	meetingID := vars["id"]
 	if r.Method == "GET" {
 		members := make([]int64, 0)
 		result := &Meeting{}
 		row := c.CalendarStore.QueryRow("SELECT MeetingName, MeetingDesc, CreatorID FROM Meeting WHERE MeetingID = ?", meetingID)
 		if err := row.Scan(&result.MeetingName, &result.MeetingDesc, &result.CreatorID); err != nil {
-			http.Error(w, "Database could not be queried", http.StatusInternalServerError)
+			http.Error(w, "Meeting does not exist", http.StatusBadRequest)
 			return
 		}
 		rows, queryErr := c.CalendarStore.Query("SELECT UserID FROM MeetingMembers WHERE MeetingID = ?", meetingID)
@@ -141,13 +163,14 @@ func (c *Context) SpecificMeetingHandler(w http.ResponseWriter, r *http.Request)
 			rows.Scan(&temp.userID)
 			members = append(members, temp.userID)
 		}
-		weeks := []Week{}
-		for _, id := range members {
+		result.Members = members
+		weeks := make([]Week, len(members))
+		for i, id := range members {
 			ws, err := c.GetUserTimes(id, w)
 			if err != nil {
 				return
 			}
-			weeks = append(weeks, ws)
+			weeks[i] = ws
 		}
 		if len(weeks) > 0 {
 			firstUser := weeks[0]
@@ -184,15 +207,25 @@ func (c *Context) SpecificMeetingHandler(w http.ResponseWriter, r *http.Request)
 			return
 		}
 		temp := &Holder{}
-		email := ""
-		json.Unmarshal(data, &email)
-		row := c.CalendarStore.QueryRow("SELECT UserID FROM Users WHERE email = ?", email)
-		row.Scan(temp.userID)
+		json.Unmarshal(data, &temp)
+		row := c.CalendarStore.QueryRow("SELECT UserID FROM Users WHERE Email = ?", temp.Email)
+		scanErr := row.Scan(&temp.userID)
+		if scanErr != nil {
+			fmt.Println(scanErr)
+			http.Error(w, "Error reading from database", http.StatusInternalServerError)
+			return
+		}
+		fmt.Println(temp.userID)
 		insq := "INSERT INTO MeetingMembers(UserID, MeetingID) VALUES(?,?)"
-		c.CalendarStore.Exec(insq, temp.userID, meetingID)
+		_, insErr := c.CalendarStore.Exec(insq, temp.userID, meetingID)
+		if insErr != nil {
+			fmt.Println(insErr)
+			http.Error(w, "Problem inserting into database", http.StatusInternalServerError)
+			return
+		}
 		w.Header().Set("Content-Type", "string")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("User added succesfully"))
+		w.Write([]byte("User added successfully"))
 	} else {
 		http.Error(w, "Invalid method", http.StatusMethodNotAllowed)
 		return
@@ -202,7 +235,7 @@ func (c *Context) SpecificMeetingHandler(w http.ResponseWriter, r *http.Request)
 func (c *Context) GetUserTimes(userID int64, w http.ResponseWriter) (Week, error) {
 	ws := Week{}
 	references := []*[]string{&ws.Sunday, &ws.Monday, &ws.Tuesday, &ws.Wednesday, &ws.Thursday, &ws.Friday, &ws.Saturday}
-	rows, getErr := c.CalendarStore.Query("SELECT DayID, TimeStart FROM UserTimes UT INNER JOIN `Time` T ON UT.TimeID = T.TimeID WHERE UserID = ?", c.UserID)
+	rows, getErr := c.CalendarStore.Query("SELECT DayID, TimeStart FROM UserTimes UT INNER JOIN `Time` T ON UT.TimeID = T.TimeID WHERE UserID = ?", userID)
 	if getErr != nil {
 		fmt.Println(getErr)
 		http.Error(w, "No free times have been added", http.StatusBadRequest)
@@ -214,13 +247,25 @@ func (c *Context) GetUserTimes(userID int64, w http.ResponseWriter) (Week, error
 			http.Error(w, "Database error", http.StatusInternalServerError)
 			return Week{}, errors.New("Database error")
 		}
-		*references[temp.dayID] = append(*references[temp.dayID], temp.timeString)
+		*references[temp.dayID-1] = append(*references[temp.dayID-1], temp.timeString)
+	}
+	for i := 0; i < len(references); i++ {
+		if *references[i] == nil {
+			*references[i] = make([]string, 0)
+		}
 	}
 	return ws, nil
 }
 
-func (c *Context) InsertHelper(times []string, dayID int, w http.ResponseWriter) {
+func (c *Context) InsertHelper(times []string, dayName string, w http.ResponseWriter) {
 	insq := "INSERT INTO UserTimes(UserID, TimeID, DayID) VALUES(?,?,?)"
+	dayRow := c.CalendarStore.QueryRow("SELECT DayID FROM `Day` WHERE DayName = ?", dayName)
+	var dayID int64
+	err := dayRow.Scan(&dayID)
+	if err != nil {
+		http.Error(w, "Error retrieving day", http.StatusBadRequest)
+		return
+	}
 	for _, timeStart := range times {
 		var timeID int64
 		row := c.CalendarStore.QueryRow("SELECT TimeID FROM `Time` WHERE TimeStart = ?", timeStart)

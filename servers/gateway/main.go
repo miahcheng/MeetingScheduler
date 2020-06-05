@@ -86,8 +86,8 @@ func main() {
 	mux.HandleFunc("/users", handler.UsersHandler)
 	mux.HandleFunc("/sessions", handler.SessionsHandler)
 	mux.Handle("/meeting", meetingProxy)
-	mux.Handle("/user/", meetingProxy)
 	mux.Handle("/meeting/", meetingProxy)
+	mux.Handle("/user/", meetingProxy)
 
 	newMux := handlers.NewPreflight(mux)
 
