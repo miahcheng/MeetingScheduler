@@ -38,6 +38,10 @@ type SQLStore struct {
 	Db *sql.DB
 }
 
+func GetNewStore(db *sql.DB) *SQLStore {
+	return &SQLStore{db}
+}
+
 // GetByID gets the User by given ID value
 func (database SQLStore) GetByID(ID int64) (*User, error) {
 	info, err := database.Db.Query("SELECT ID, Email, PassHash, UserName, FirstName, LastName, FROM Users WHERE ID = ?", ID)

@@ -36,7 +36,6 @@ function setState(){
   if (state.selected.size === 0){
     newMap();
   }
-  //GET USER, set state.selected to GET USER JSON
   fetch(base + "/user/",
       {
           method: "GET",

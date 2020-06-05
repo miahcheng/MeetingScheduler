@@ -3,7 +3,6 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"path"
 	"strconv"
@@ -154,7 +153,6 @@ func (context HandlerContext) SessionsHandler(w http.ResponseWriter, r *http.Req
 			http.Error(w, "Invalid Credentials", http.StatusUnauthorized)
 			return
 		}
-		log.Printf("User %s attempted to sign in", curUser.UserName)
 		signInTime := time.Now()
 		ipAdd := ""
 		if len(r.Header.Get("X-Forwarded-For")) != 0 {
