@@ -20,6 +20,7 @@ func (c *Context) MeetingsHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" {
 		if r.Header.Get("Content-Type") != "application/json" {
 			http.Error(w, "Wrong content type, must be application/json", http.StatusUnsupportedMediaType)
+			return
 		}
 		data, readErr := ioutil.ReadAll(r.Body)
 		if readErr != nil {
@@ -52,6 +53,7 @@ func (c *Context) MeetingsHandler(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Meeting created successfully"))
 	} else {
 		http.Error(w, "Method must be POST", http.StatusMethodNotAllowed)
+		return
 	}
 }
 
@@ -211,15 +213,12 @@ func (c *Context) SpecificMeetingHandler(w http.ResponseWriter, r *http.Request)
 		row := c.CalendarStore.QueryRow("SELECT UserID FROM Users WHERE Email = ?", temp.Email)
 		scanErr := row.Scan(&temp.userID)
 		if scanErr != nil {
-			fmt.Println(scanErr)
 			http.Error(w, "Error reading from database", http.StatusInternalServerError)
 			return
 		}
-		fmt.Println(temp.userID)
 		insq := "INSERT INTO MeetingMembers(UserID, MeetingID) VALUES(?,?)"
 		_, insErr := c.CalendarStore.Exec(insq, temp.userID, meetingID)
 		if insErr != nil {
-			fmt.Println(insErr)
 			http.Error(w, "Problem inserting into database", http.StatusInternalServerError)
 			return
 		}
@@ -237,7 +236,6 @@ func (c *Context) GetUserTimes(userID int64, w http.ResponseWriter) (Week, error
 	references := []*[]string{&ws.Sunday, &ws.Monday, &ws.Tuesday, &ws.Wednesday, &ws.Thursday, &ws.Friday, &ws.Saturday}
 	rows, getErr := c.CalendarStore.Query("SELECT DayID, TimeStart FROM UserTimes UT INNER JOIN `Time` T ON UT.TimeID = T.TimeID WHERE UserID = ?", userID)
 	if getErr != nil {
-		fmt.Println(getErr)
 		http.Error(w, "No free times have been added", http.StatusBadRequest)
 		return Week{}, errors.New("Could not contact database")
 	}
@@ -270,7 +268,6 @@ func (c *Context) InsertHelper(times []string, dayName string, w http.ResponseWr
 		var timeID int64
 		row := c.CalendarStore.QueryRow("SELECT TimeID FROM `Time` WHERE TimeStart = ?", timeStart)
 		if err := row.Scan(&timeID); err != nil {
-			fmt.Println(err)
 			http.Error(w, "Error retrieving times", http.StatusBadRequest)
 			return
 		}
