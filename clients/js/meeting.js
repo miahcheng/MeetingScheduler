@@ -32,7 +32,7 @@ let testing1 = {
 }
 
 function setState() {
-  state.auth = sessionStorage.getItem('auth');
+  state.auth = sessionStorage.getItem("auth");
   console.log(state.auth);
   if (state.selected.size === 0) {
     newMap();

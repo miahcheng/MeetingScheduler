@@ -5,7 +5,7 @@ let state = {
     testing: "1"
 };
 
-const base = "https://api.blah.com";
+const base = "https://api.jimhua32.me";
 const user = "/user/";
 const myuser = "/user/id";
 const sessions = "/sessions";
@@ -63,7 +63,6 @@ function createNewUser() {
         "Email": document.getElementById("inputEmail3").value,
         "Password": document.getElementById("inputPassword3").value,
         "PasswordConf": document.getElementById("inputPassword3C").value,
-        "UserName": document.getElementById("username").value,
         "FirstName": document.getElementById("fname").value,
         "LastName": document.getElementById("lname").value
     };
