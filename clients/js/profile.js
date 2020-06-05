@@ -8,7 +8,6 @@ fetch(base + "/user/",
         method: "GET",
         headers: {
             "Authorization": sessionStorage.getItem("auth"),
-            "Content-Type": "application/json"
         }
     }
 ).then(response => {
