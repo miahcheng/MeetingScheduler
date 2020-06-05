@@ -59,10 +59,10 @@ document.getElementById("submitLog").addEventListener("click", function(event) {
             return;
         } else {
             console.log(response)
-            let token = [];
-            token = response.headers.get("Authorization").split(" ");
+            // let token = [];
+            let token = response.headers.get("Authorization");
             console.log(token);
-            sessionStorage.setItem("auth", token[1]);
+            sessionStorage.setItem("auth", token);
             sessionStorage.setItem("loggedIn", true);
         }
         console.log("hello2");
@@ -144,11 +144,18 @@ document.getElementById("submitNUser").addEventListener("click", (event) => {
         }
         console.log(response);
         let token = [];
-        token = response.headers.get("Authorization").split(" ");
-        console.log(token);
-        sessionStorage.setItem("auth", token[1]);
+        // token = response.headers.get("Authorization").split(" ");
+        // console.log(token);
+        // sessionStorage.setItem("auth", token[1]);
         window.alert("User signed up! Please log in");
         toggleLogin("block", "none");
     });
     // exports.auth = state.auth;
 });
+
+window.logoutUser = function() {
+    document.getElementById("logoutUser").addEventListener("click", (event) => {
+        sessionStorage.setItem("auth", "");
+        window.location.href="index.html";
+    })
+}
