@@ -73,10 +73,9 @@ function setState(){
   fetch(base + "/user/",
       {
           method: "GET",
-          body: "",
-          headers: new Headers({
+          headers: {
               "Authentication":state.auth,
-          })
+          }
       }
   ).then(response => {
     if (response.status == 400 || response.status == 405 || response.status == 401) {
