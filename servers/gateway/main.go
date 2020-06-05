@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/go-redis/redis"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 func main() {
@@ -78,4 +79,8 @@ func main() {
 	mux.Handle("/user/", meetingProxy)
 	mux.Handle("/meeting/{id}", meetingProxy)
 	mux.Handle("/meeting", meetingProxy)
+
+	newMux := handlers.NewCorsMW(mux)
+
+	log.Fatal(http.ListenAndServeTLS(addr, cert, key, newMux))
 }

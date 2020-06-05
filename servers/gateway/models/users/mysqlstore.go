@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"time"
-	// _ "github.com/go-sql-driver/mysql"
 )
 
 // InvalidUser is returned when there's an error finding user in database

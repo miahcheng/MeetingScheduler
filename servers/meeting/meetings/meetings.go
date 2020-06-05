@@ -163,7 +163,10 @@ func (c *Context) SpecificMeetingHandler(w http.ResponseWriter, r *http.Request)
 			return
 		}
 		temp := &Holder{}
-		json.Unmarshal(data, &temp.userID)
+		email := ""
+		json.Unmarshal(data, &email)
+		row := c.CalendarStore.QueryRow("SELECT UserID FROM Users WHERE email = ?", email)
+		row.Scan(temp.userID)
 		insq := "INSERT INTO MeetingMembers(UserID, MeetingID) VALUES(?,?)"
 		c.CalendarStore.Exec(insq, temp.userID, meetingID)
 		w.Header().Set("Content-Type", "string")
