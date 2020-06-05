@@ -1,7 +1,8 @@
 'use strict';
 
 let state = {
-    auth: ""
+    auth: "",
+    testing: "1"
 };
 
 const base = "https://api.blah.com";
@@ -10,16 +11,21 @@ const myuser = "/user/id";
 const sessions = "/sessions";
 const mySession = "/sessions/mine";
 
+function isLoggedIn() {
+    // return state.auth === "";
+    return sessionStorage.getItem("auth") === "";
+}
+
 function loginUser() {
     // let form = document.getElementById("loginAll");
     let email = document.getElementById("exampleInputEmail1").value;
     let pass = document.getElementById("exampleInputPassword1").value;
-    fetch(base + sessions, 
+    fetch(base + sessions,
         {
             method: "POST",
             body: JSON.stringify({
                 Email: email,
-                Password: pass 
+                Password: pass
             }),
             headers: new Headers({
                 "Content-Type": "application/json",
@@ -34,7 +40,8 @@ function loginUser() {
         let token = [];
         token = response.headers.get("Authorization").split(" ");
         console.log(token);
-        state.auth = token[0];
+        // state.auth = token[0];
+        sessionStorage.setItem("auth", token);
     }
     )
 }
@@ -45,6 +52,7 @@ document.getElementById("submitLog").addEventListener("click", (event) => {
     console.log(document.getElementById("exampleInputEmail1").value);
     console.log(document.getElementById("exampleInputPassword1").value);
     loginUser();
+    // sessionStorage.setItem(auth, '1');
     window.location.href="index.html";
 });
 
@@ -73,9 +81,10 @@ function createNewUser() {
             console.log(response);
             return
         }
-        let token = [];
-        token = response.headers.get("Authorization").split(" ");
-        state.auth = token;
+        // let token = [];
+        // token = response.headers.get("Authorization").split(" ");
+        // state.auth = token;
+        
     })
 }
 
@@ -84,6 +93,7 @@ function createNewUser() {
 document.getElementById("submitNUser").addEventListener("click", (event) => {
     event.preventDefault();
     createNewUser();
+    exports.auth = state.auth;
     window.location.href="index.html";
 })
 
@@ -117,4 +127,3 @@ document.getElementById("newMeet").addEventListener("click", function(event) {
         window.alert("New Meeting Created!");
     })
 });
-
