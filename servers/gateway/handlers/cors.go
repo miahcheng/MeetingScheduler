@@ -4,36 +4,24 @@ import (
 	"net/http"
 )
 
-const accessControlAllowOrigin = "Access-Control-Allow-Origin"
-const accessControlAllowMethods = "Access-Control-Allow-Methods"
-const accessControlAllowHeaders = "Access-Control-Allow-Headers"
-const accessControlExposedHeaders = "Access-Control-Expose-Headers"
-const accessControlMaxAge = "Access-Control-Max-Age"
-
-const allowedMethods = "GET, PUT, POST, PATCH, DELETE"
-const allowedHeaders = "Content-Type, Authorization"
-const exposedHeaders = "Authorization"
-const maxAge = "600"
-
-// CorsMW blah
-type CorsMW struct {
-	Handler http.Handler
+type Preflight struct {
+	handler http.Handler
 }
 
-func (c *CorsMW) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set(accessControlAllowOrigin, "*")
-	w.Header().Set(accessControlAllowMethods, allowedMethods)
-	w.Header().Set(accessControlAllowHeaders, allowedHeaders)
-	w.Header().Set(accessControlExposedHeaders, exposedHeaders)
-	w.Header().Set(accessControlMaxAge, maxAge)
+func (p *Preflight) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", r.Header.Get("Origin"))
+	w.Header().Set("Access-Control-Allow-Methods", "GET, PUT, POST, PATCH, DELETE")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+	w.Header().Set("Access-Control-Expose-Headers", "Authorization")
+	w.Header().Set("Access-Control-Max-Age", "600")
+
 	if r.Method == "OPTIONS" {
 		w.WriteHeader(http.StatusOK)
 		return
 	}
-	c.Handler.ServeHTTP(w, r)
+	p.handler.ServeHTTP(w, r)
 }
 
-// NewCorsMW blah
-func NewCorsMW(handlerToWrap http.Handler) *CorsMW {
-	return &CorsMW{handlerToWrap}
+func NewPreflight(handlerToWrap http.Handler) *Preflight {
+	return &Preflight{handlerToWrap}
 }

@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"info441-finalproj/servers/gateway/handlers"
 	"info441-finalproj/servers/gateway/models/users"
@@ -15,6 +16,7 @@ import (
 	"time"
 
 	"github.com/go-redis/redis"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 func main() {
@@ -24,7 +26,7 @@ func main() {
 	sess := os.Getenv("SESSIONKEY")
 	redisAddr := os.Getenv("REDISADDR")
 	meetingAddr := os.Getenv("MEETINGADDR")
-	dsn := os.Getenv("dsn")
+	dsn := os.Getenv("DSN")
 
 	if len(addr) == 0 {
 		addr = ":443"
@@ -51,8 +53,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	handler := handlers.HandlerContext{
-		SigningKey:   sess,
+	handler := handlers.Handler{
+		SessionKey:   sess,
 		SessionStore: sessions.NewRedisStore(rclient, dur),
 		UserStore:    users.GetNewStore(db),
 	}
@@ -66,6 +68,14 @@ func main() {
 			rand.Seed(time.Now().UnixNano())
 			serv = addresses[rand.Intn(len(addresses))]
 		}
+		r.Header.Del("X-User")
+		state := &handlers.SessionState{}
+		sid, _ := sessions.GetSessionID(r, handler.SessionKey)
+		err := handler.SessionStore.Get(sid, &state)
+		if err == nil {
+			json, _ := json.Marshal(state.User)
+			r.Header.Set("X-User", string(json))
+		}
 		r.Host = serv
 		r.URL.Host = serv
 		r.URL.Scheme = "http"
@@ -75,7 +85,11 @@ func main() {
 
 	mux.HandleFunc("/users", handler.UsersHandler)
 	mux.HandleFunc("/sessions", handler.SessionsHandler)
-	mux.Handle("/user/", meetingProxy)
-	mux.Handle("/meeting/{id}", meetingProxy)
 	mux.Handle("/meeting", meetingProxy)
+	mux.Handle("/meeting/", meetingProxy)
+	mux.Handle("/user/", meetingProxy)
+
+	newMux := handlers.NewPreflight(mux)
+
+	log.Fatal(http.ListenAndServeTLS(addr, cert, key, newMux))
 }

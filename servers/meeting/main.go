@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
 )
 
@@ -23,8 +24,8 @@ func main() {
 	server := meetings.Context{CalendarStore: db}
 
 	mux.HandleFunc("/user/", server.SpecificUserHandler)
-	mux.HandleFunc("/meeting/", server.SpecificMeetingHandler)
-	mux.HandleFunc("/meeintg", server.MeetingsHandler)
+	mux.HandleFunc("/meeting", server.MeetingsHandler)
+	mux.HandleFunc("/meeting/{id}", server.SpecificMeetingHandler)
 
 	http.ListenAndServe(addr, mux)
 }

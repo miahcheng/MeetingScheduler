@@ -29,10 +29,20 @@ type Meeting struct {
 type Holder struct {
 	userID     int64
 	dayID      int64
+	meetingID  int64
 	timeString string
+	Email      string
 }
 
 type Context struct {
 	UserID        int64
 	CalendarStore *sql.DB
+}
+
+type User struct {
+	Email     string
+	FirstName string
+	LastName  string
+	Meetings  []int64
+	Week      Week
 }

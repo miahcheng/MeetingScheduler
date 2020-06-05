@@ -62,7 +62,7 @@ fetch(base + "/user/",
     let wed = document.createElement("p");
     wed.innerText = "Wednesday: " + response.Week.Wednesday;
     cardbod.appendChild(wed);
-    
+
     let thurs = document.createElement("p");
     thurs.innerText = "Thursday: " + response.Week.Thursday;
     cardbod.appendChild(thurs);
