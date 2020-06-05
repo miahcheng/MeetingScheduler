@@ -57,3 +57,8 @@
 .day {
     margin: 0.5em;
 }
+
+
+#signUp {
+    display: none;
+}

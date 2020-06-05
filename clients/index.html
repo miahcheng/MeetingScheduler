@@ -13,7 +13,7 @@
     <title>Info 441 Final Project</title>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <!-- <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <a class="navbar-brand" href="index.html">Who's Free?</a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
             aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -31,7 +31,7 @@
                 </li>
             </ul>
         </div>
-    </nav>
+    </nav> -->
     <main>
         <div class="jumbotron jumbotron-fluid">
             <div class="container" id="intro">
@@ -39,61 +39,73 @@
                 <p class="lead">A efficient meeting scheduler, and a way to keep track of your free times</p>
             </div>
         </div>
-        <div class="container">
-            <div class="row" id="pageCards">
-                <div class="card col-4 shadow-sm text-center">
-                    <img class="card-img-top"><i class="fas fa-plus-square"></i></img>
-                    <div class="card-body">
-                        <h2 class="card-title">
-                            Create Meeting
-                        </h2>
-                        <p class="card-text">
-                            Create a new meeting to schedule for! Pick a time to meet up with your friends or a mutual
-                            time
-                            for your project groups
-                        </p>
-                        <a href="newmeeting.html" class="btn btn-primary btn-block">Create</a>
+        <div class="container" id="loginUser">
+            <div class="row">
+                <div class="col-8 align-self-center">
+                    <div class="card border-dark" id="login">
+                        <div class="card-header">Login</div>
+                        <div class="card-body text-dark">
+                            <form id = "loginAll">
+                                <div class="form-group">
+                                    <label class="loginForm" for="exampleInputEmail1">Email address</label>
+                                    <input type="email" class="form-control input-group-lg" id="exampleInputEmail1"
+                                        aria-describedby="emailHelp">
+                                </div>
+                                <div class="form-group">
+                                    <label class="loginForm" for="exampleInputPassword1">Password</label>
+                                    <input type="password" class="form-control input-group-lg"
+                                        id="exampleInputPassword1">
+                                </div>
+                                <button type="submit" class="btn btn-primary" id="submitLog">Login</button>
+                                <a href="signup.html" class="btn btn-primary" id="goToSign">Sign Up Instead</a>
+                            </form>
+                        </div>
                     </div>
                 </div>
-                <div class="card col-4 shadow-sm text-center">
-                    <img class="card-img-top"><i class="fas fa-plus-square"></i></img>
-                    <div class="card-body">
-                        <h2 class="card-title">
-                            View Meetings
-                        </h2>
-                        <p class="card-text">
-                            View all of the meetings you're a part of. Incase you forgot about your commitments!
-                        </p>
-                        <a href="viewmeeting.html" class="btn btn-primary btn-block">View</a>
-                    </div>
-                </div>
-                <div class="card col-4 shadow-sm text-center">
-                    <img class="card-img-top"><i class="fas fa-plus-square"></i></img>
-                    <div class="card-body">
-                        <h2 class="card-title">
-                            Add Free Time
-                        </h2>
-                        <p class="card-text">
-                            Add the times that you are available to meet each week. This will apply to all your
-                            meetings!
-                        </p>
-                        <a href="addtime.html" class="btn btn-primary btn-block">Add Availability</a>
-                    </div>
-                </div>  <div class="card col-4 shadow-sm text-center">
-                      <img class="card-img-top"><i class="fas fa-plus-square"></i></img>
-                      <div class="card-body">
-                          <h2 class="card-title">
-                            View User
-                          </h2>
-                          <p class="card-text">
-                              View Your Profile and Schedule here
-                          </p>
-                          <a href="addtime.html" class="btn btn-primary btn-block">View User Profile</a>
-                      </div>
-                  </div>
             </div>
+        </div>
+        <div class="container" id="signUp">
+            <form>
+                <div class="form-group row">
+                    <label for="inputEmail3" class="col-sm-2 col-form-label">Email</label>
+                    <div class="col-sm-10">
+                        <input type="email" class="form-control" id="inputEmail3">
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label for="inputPassword3" class="col-sm-2 col-form-label">Password</label>
+                    <div class="col-sm-10">
+                        <input type="password" class="form-control" id="inputPassword3">
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label for="inputPassword3" class="col-sm-2 col-form-label">Password Confirmation</label>
+                    <div class="col-sm-10">
+                        <input type="password" class="form-control" id="inputPassword3C">
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label class="col-sm-2 col-form-label">First Name</label>
+                    <div class="col-sm-10">
+                        <input type="text" class="form-control" id="fname">
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label class="col-sm-2 col-form-label">Last Name</label>
+                    <div class="col-sm-10">
+                        <input type="text" class="form-control" id="lname">
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <div class="col-sm-10">
+                        <button type="submit" class="btn btn-primary" id="submitNUser">Sign Up</button>
+                        <a href="login.html" class="btn btn-primary" id="goToLog">Log In Instead</a>
+                    </div>
+                </div>
+            </form>
+        </div>
     </main>
-    <script src="js/navigation.js"></script>
+    <script src="js/index_anna.js"></script>
 </body>
 
 </html>
