@@ -24,8 +24,8 @@ func main() {
 	server := meetings.Context{CalendarStore: db}
 
 	mux.HandleFunc("/user/", server.SpecificUserHandler)
-	mux.HandleFunc("/meeting/", server.SpecificMeetingHandler)
-	mux.HandleFunc("/meeintg", server.MeetingsHandler)
+	mux.HandleFunc("/meeting/{id}", server.SpecificMeetingHandler)
+	mux.HandleFunc("/meeting", server.MeetingsHandler)
 
 	http.ListenAndServe(addr, mux)
 }

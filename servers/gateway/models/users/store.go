@@ -27,7 +27,6 @@ type Store interface {
 	//Delete deletes the user with the given ID
 	Delete(id int64) error
 
-	// InsertSignIN inserts into the sign in table to track
-	// user sign in attempts
-	InsertSignIn(user *User, signinTime time.Time, ipAddy string) (*User, error)
+	//Tracks a single login
+	TrackLogin(id int64, ip string, time time.Time) error
 }

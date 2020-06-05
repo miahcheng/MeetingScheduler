@@ -2,6 +2,7 @@ package meetings
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"info441-finalproj/servers/gateway/models/users"
 	"io/ioutil"
@@ -13,7 +14,10 @@ import (
 )
 
 func (c *Context) MeetingsHandler(w http.ResponseWriter, r *http.Request) {
-	CheckAuth(w, r, c)
+	err := CheckAuth(w, r, c)
+	if err != nil {
+		return
+	}
 	if r.Method == "POST" {
 		if r.Header.Get("Content-Type") != "application/json" {
 			http.Error(w, "Wrong content type, must be application/json", http.StatusUnsupportedMediaType)
@@ -27,7 +31,7 @@ func (c *Context) MeetingsHandler(w http.ResponseWriter, r *http.Request) {
 		meeting := Meeting{}
 		json.Unmarshal(data, &meeting)
 		insq := "INSERT INTO Meeting(CreatorID, MeetingName, MeetingDesc) VALUES(?, ?, ?)"
-		res, err := c.CalendarStore.Exec(insq, meeting.CreatorID, meeting.MeetingName, meeting.MeetingDesc)
+		res, err := c.CalendarStore.Exec(insq, c.UserID, meeting.MeetingName, meeting.MeetingDesc)
 		if err != nil {
 			http.Error(w, "Error with connecting to database", http.StatusInternalServerError)
 			return
@@ -39,7 +43,7 @@ func (c *Context) MeetingsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		if len(meeting.Members) > 0 {
 			for _, member := range meeting.Members {
-				query := "INSERT INTO MeetingMembers(UserID, MeetingID) VALUES(?, ?"
+				query := "INSERT INTO MeetingMembers(UserID, MeetingID) VALUES(?, ?)"
 				c.CalendarStore.Exec(query, member, cid)
 			}
 		}
@@ -52,9 +56,15 @@ func (c *Context) MeetingsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *Context) SpecificUserHandler(w http.ResponseWriter, r *http.Request) {
-	CheckAuth(w, r, c)
+	err := CheckAuth(w, r, c)
+	if err != nil {
+		return
+	}
 	if r.Method == "GET" {
-		ws := c.GetUserTimes(c.UserID, w)
+		ws, err := c.GetUserTimes(c.UserID, w)
+		if err != nil {
+			return
+		}
 		weekJSON, jsonErr := json.Marshal(ws)
 		if jsonErr != nil {
 			http.Error(w, "Data could not be returned", http.StatusInternalServerError)
@@ -66,6 +76,7 @@ func (c *Context) SpecificUserHandler(w http.ResponseWriter, r *http.Request) {
 	} else if r.Method == "PATCH" {
 		if r.Header.Get("Content-Type") != "application/json" {
 			http.Error(w, "Wrong content type, must be application/json", http.StatusUnsupportedMediaType)
+			return
 		}
 		data, readErr := ioutil.ReadAll(r.Body)
 		if readErr != nil {
@@ -85,7 +96,10 @@ func (c *Context) SpecificUserHandler(w http.ResponseWriter, r *http.Request) {
 		c.InsertHelper(tempWeek.Friday, 6, w)
 		c.InsertHelper(tempWeek.Saturday, 7, w)
 
-		ws := c.GetUserTimes(c.UserID, w)
+		ws, err := c.GetUserTimes(c.UserID, w)
+		if err != nil {
+			return
+		}
 		weekJSON, jsonErr := json.Marshal(ws)
 		if jsonErr != nil {
 			http.Error(w, "Data could not be returned", http.StatusInternalServerError)
@@ -96,11 +110,15 @@ func (c *Context) SpecificUserHandler(w http.ResponseWriter, r *http.Request) {
 		w.Write(weekJSON)
 	} else {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
 	}
 }
 
 func (c *Context) SpecificMeetingHandler(w http.ResponseWriter, r *http.Request) {
-	CheckAuth(w, r, c)
+	err := CheckAuth(w, r, c)
+	if err != nil {
+		return
+	}
 	meetingID, idErr := strconv.Atoi(path.Base(r.URL.Path))
 	if idErr != nil {
 		http.Error(w, "Invalid ID passed, cannot parse", http.StatusBadRequest)
@@ -125,7 +143,10 @@ func (c *Context) SpecificMeetingHandler(w http.ResponseWriter, r *http.Request)
 		}
 		weeks := []Week{}
 		for _, id := range members {
-			ws := c.GetUserTimes(id, w)
+			ws, err := c.GetUserTimes(id, w)
+			if err != nil {
+				return
+			}
 			weeks = append(weeks, ws)
 		}
 		if len(weeks) > 0 {
@@ -178,32 +199,34 @@ func (c *Context) SpecificMeetingHandler(w http.ResponseWriter, r *http.Request)
 	}
 }
 
-func (c *Context) GetUserTimes(userID int64, w http.ResponseWriter) Week {
+func (c *Context) GetUserTimes(userID int64, w http.ResponseWriter) (Week, error) {
 	ws := Week{}
 	references := []*[]string{&ws.Sunday, &ws.Monday, &ws.Tuesday, &ws.Wednesday, &ws.Thursday, &ws.Friday, &ws.Saturday}
-	rows, getErr := c.CalendarStore.Query("SELECT DayID, TimeStart FROM UserTimes WHERE UserID = ?", c.UserID)
+	rows, getErr := c.CalendarStore.Query("SELECT DayID, TimeStart FROM UserTimes UT INNER JOIN `Time` T ON UT.TimeID = T.TimeID WHERE UserID = ?", c.UserID)
 	if getErr != nil {
-		http.Error(w, "Could not find that user", http.StatusBadRequest)
-		return Week{}
+		fmt.Println(getErr)
+		http.Error(w, "No free times have been added", http.StatusBadRequest)
+		return Week{}, errors.New("Could not contact database")
 	}
 	for rows.Next() {
 		temp := &Holder{}
 		if err := rows.Scan(&temp.dayID, &temp.timeString); err != nil {
 			http.Error(w, "Database error", http.StatusInternalServerError)
-			return Week{}
+			return Week{}, errors.New("Database error")
 		}
 		*references[temp.dayID] = append(*references[temp.dayID], temp.timeString)
 	}
-	return ws
+	return ws, nil
 }
 
 func (c *Context) InsertHelper(times []string, dayID int, w http.ResponseWriter) {
 	insq := "INSERT INTO UserTimes(UserID, TimeID, DayID) VALUES(?,?,?)"
 	for _, timeStart := range times {
 		var timeID int64
-		row := c.CalendarStore.QueryRow("SELECT TimeID FROM [Time] WHERE TimeStart = ?", timeStart)
+		row := c.CalendarStore.QueryRow("SELECT TimeID FROM `Time` WHERE TimeStart = ?", timeStart)
 		if err := row.Scan(&timeID); err != nil {
-			http.Error(w, "Error retreiving times", http.StatusBadRequest)
+			fmt.Println(err)
+			http.Error(w, "Error retrieving times", http.StatusBadRequest)
 			return
 		}
 		c.CalendarStore.Exec(insq, c.UserID, timeID, dayID)
@@ -212,15 +235,16 @@ func (c *Context) InsertHelper(times []string, dayID int, w http.ResponseWriter)
 
 // Helper function to check if the current user is authenticated. If so, the user's ID is saved
 // in a context struct used to keep track of the session.
-func CheckAuth(w http.ResponseWriter, r *http.Request, c *Context) {
+func CheckAuth(w http.ResponseWriter, r *http.Request, c *Context) error {
 	if r.Header.Get("X-User") == "" {
 		http.Error(w, "User is not authenticated", http.StatusUnauthorized)
-		return
-	} else {
-		userInfo := &users.User{}
-		json.Unmarshal([]byte(r.Header.Get("X-User")), userInfo)
-		c.UserID = userInfo.ID
+		return errors.New("Unauthenticated user")
 	}
+	userInfo := &users.User{}
+	json.Unmarshal([]byte(r.Header.Get("X-User")), userInfo)
+	c.UserID = userInfo.ID
+
+	return nil
 }
 
 func InterfaceToString(interfaces []interface{}) []string {
