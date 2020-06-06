@@ -12,6 +12,7 @@ function toggleLogin(loginD, signD) {
 }
 
 console.log(sessionStorage.getItem("auth"));
+sessionStorage.setItem("auth", "");
 const base = "https://api.jimhua32.me";
 const user = "/user/";
 const myuser = "/user/id";
