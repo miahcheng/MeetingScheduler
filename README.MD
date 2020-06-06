@@ -5,15 +5,14 @@ This application is intended to be used by people who need to easily figure out 
 
 # Technical Description
 ![](imgs/revised_diagram.png)
-<!-- ![](imgs/diagram.png) -->
-<!-- ![](imgs/priority.png) -->
 | Priority | Description |
 | -------- | ----------- |
 | P0 | As a user, I want to be able to input my free times and see where overlap exists |
-| P1 | As a user, I want to be able to get the free times for a specific meeting |
-| P2 | As a user, I want to be able to change my schedule |
-| P3 | As a user, I want to be able to save a general schedule, which can be used quickly |
-| P4 | As a user, I want to be able to alter my schedule once a meeting is decided |
+| P1 | As a user, I want to be able to be able to create a meeting and add other users |
+| P2 | As a user, I want to be able to save a schedule that is tied specifically to my account |
+| P3 | As a user, I want to be able to change my schedule |
+| P4 | As a user, I want to be able to view updated meeting times based on my saved schedule |
+| P5 | As a user, I want to be able to alter my schedule once a meeting is decided |
 
 # Endpoints
 * `GET`; `/user/`: Gets the free times, schedule, and meetings for a user
@@ -55,6 +54,16 @@ This application is intended to be used by people who need to easily figure out 
     * Response Codes:
         * `201`: `application/json` success
         * `401`: User not authenticated or User is not the creator
+        * `405`: Wrong Method
+        * `415`: Wrong content header
+* `GET`; `/getuser/{id}`: View information for users
+    * Inputs: ID from URL
+    * Outputs: `application/json`
+    * Header: 
+        * Authentication: bearer token
+        * Content-Type: `application/json`
+    * Response Codes:
+        * `200`: `application/json` success
         * `405`: Wrong Method
         * `415`: Wrong content header
 * `POST`; `/users`: creates a new user
@@ -129,16 +138,64 @@ This application is intended to be used by people who need to easily figure out 
     }
 ```
 
-### Meeting Fields:
-Meeting ID,
-Meeting Name,
-User IDs (array),
-Free Times (array), calculated from users’ free times
+
+`free times` will be returned as:
+```
+    {
+        “Sunday”: [“1000”, “1030”, “1100”],
+        “Monday”: [“1130”, “1330”, “1600”. “1630”],
+        “Tuesday”: [“0100”, “0700”, “0800”, “1400”, “1430”],
+        “Wednesday”: [“1900”, “1930”, “2000”, “2030”],
+        “Thursday”:[ ],
+        “Friday”: [“1200”. “1230”. “1300”. “1330”],
+        “Saturday”: [“0900”, “0930”, “1000”, “1030”]
+    }
+```
+
+`meetings` will be returned as:
+```
+    {
+        “Meeting Name”:”Info 441 party”,
+        “Meeting Desc”:”none”,
+        “CreatorID”:1,
+        “Members”:[2,3,5],
+        “Sunday”: [“1000”, “1030”],
+        “Monday”: [“1130”, “1600”. “1630”],
+        “Tuesday”: [“0100”],
+        “Wednesday”: [“1900”, “1930”, “2000”, “2030”],
+        “Thursday”:[ ],
+        “Friday”: [“1200”. “1230”],
+        “Saturday”:[ ],
+    }
+```
 
 
-The schedule will be constructed based on the free times
-![](imgs/endpoint.png)
+`user` information will be returned as:
+```
+    {
+        "Email": "test@example.com",
+        "FirstName": "Test",
+        "LastName": "McTest",
+        "Week": {
+            "Sunday": ["1100"],
+            "Monday": ["0100"],
+            "Tuesday": [],
+            "Wednesday": [],
+            "Thursday": ["1100"],
+            "Friday": [],
+            "Saturday": ["0930"]
+        }
+    }
+```
 
+`getuser` response:
+```
+    {
+        “Email”: “test@test.com”,
+        “FirstName”: “Test”,
+        “LastName”: “Tester”
+    }
+```
 
 ### original diagram
 ![](imgs/diagram.png)
