@@ -107,7 +107,6 @@ function sendState() {
 }
 
 function renderMeetingList() {
-  console.log("okk")
   state.toDisplay = 0;
   let container = document.querySelector("#content");
   container.innerHTML = "";
@@ -161,8 +160,13 @@ function renderTitleDescUsers() {
   inp.classList.add("btn", "btn-secondary", "btn-lg", "btn-block", "pull-right");
   inp.setAttribute("type", "submit");
   inp.setAttribute("value", "Add users to meeting");
-  inp.setAttribute("data-toggle", "modal")
-  inp.setAttribute("data-target", "#basicExampleModal1")
+  inp.setAttribute("data-toggle", "modal");
+  inp.setAttribute("data-target", "#basicExampleModal1");
+  inp.addEventListener('click', () => {
+    let container = document.querySelector("#content");
+    container.innerHTML = "";
+    setState(renderOneMeeting());
+  })
   firstCol.appendChild(header);
   secondCol.appendChild(inp);
   firstRow.appendChild(firstCol);
