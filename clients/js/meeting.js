@@ -3,9 +3,8 @@ let state = {
   // key would be meetingID, holds struct:
   // {creatorID, members, meeting desc}
   toDisplay: null,
-  auth: ""
+  add: []
 };
-state.auth = sessionStorage.getItem("auth");
 const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const base = "https://api.jimhua32.me";
 let testing = {
@@ -33,7 +32,7 @@ let testing1 = {
   })
 }
 
-function setState() {
+function setState(callback) {
   state.auth = sessionStorage.getItem("auth");
   console.log(state.auth);
   fetch(base + "/user/",
@@ -48,67 +47,88 @@ function setState() {
       console.log("Error getting user information");
       console.log(response);
     }
+    return response.json();
+  }).then(response => {
+    console.log(response);
     let user = response;
-    let meetings = user.Meetings
-  })
   //Get user
   //Get meetingID
-  state.meetings.forEach(function (id) {
-    fetch(base + "/meeting/" + parseInt(id), {
-      method: "GET",
-      body: "",
-      headers: {
-        "Authentication": state.auth,
-      }
-    }).then(response => {
+    user.Meetings.forEach(function (id) {
+    fetch(base + "/meeting/" + parseInt(id),
+        {
+            method: "GET",
+            headers: {
+                "Authorization": sessionStorage.getItem("auth"),
+            }
+        }
+    ).then(response => {
       if (response.status == 401 || response.status == 405) {
         console.log("Error getting meeting information");
-        console.log(response);
       }
-      state.meetings.set(id, JSON.parse(response));
-    })
+      return response.json();
+    }).then(response => {
+        response.id = id;
+        state.meetings.set(id, response);
+        console.log(state.meetings.get(id).Members)
+        callback();
+      })
+    });
+
   });
 }
-
-function sendState(toSend) {
-  toSend.forEach(function(email) {
-    fetch(base + "/meeting/" + parseInt(state.toDisplay), {
-      method: "POST",
-      body: email,
-      headers: {
-        "Content-Type": "application/json",
-        "Authentication": state.auth,
-      }
-    }).then(response => {
+function sendState() {
+  state.add.forEach(function(email) {
+    console.log(email);
+    console.log(state.toDisplay);
+    var obj = {Email: email};
+    fetch(base + "/meeting/" + parseInt(state.toDisplay),
+        {
+          method: "POST",
+          body: JSON.stringify(obj),
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": sessionStorage.getItem("auth"),
+          }
+        }
+    ).then(response => {
         if (response.status === 415 || response.status === 401 || response.status === 405) {
           console.log("error adding user to meeting");
           console.log(response);
         }
+        setState(function(){
+          let container = document.querySelector("#content");
+          container.innerHTML = "";
+          renderOneMeeting(state.toDisplay);
+        });
     })
   })
 }
 
 function renderMeetingList() {
-  document.getElementById("submitcon").style.display = "none";
-  setState();
-  let container = document.querySelector("#content");
-  state.meetings.forEach(function (meeting) {
-    let row = document.createElement('div')
-    row.classList.add("row");
-    let b4 = document.createElement("button");
-    b4.setAttribute("type", "button");
-    b4.classList.add("btn", "btn-light", "btn-lg", "btn-block");
-    b4.id = meeting.meetingID;
-    b4.innerHTML = meeting.meetingtitle;
-    b4.addEventListener('click', () => {
-      setState();
-      state.toDisplay = parseInt(b4.id);
-      let container = document.querySelector("#content");
-      container.innerHTML = "";
-      renderOneMeeting();
+  setState(function() {
+    document.getElementById("submitcon").style.display = "none";
+    console.log(state.meetings);
+    let container = document.querySelector("#content");
+    state.meetings.forEach(function (meeting) {
+      console.log(meeting)
+      let row = document.createElement('div')
+      row.classList.add("row");
+      let b4 = document.createElement("button");
+      b4.setAttribute("type", "button");
+      b4.classList.add("btn", "btn-light", "btn-lg", "btn-block");
+      b4.id = meeting.id;
+      b4.innerHTML = meeting['MeetingName'];
+      b4.addEventListener('click', () => {
+        setState(function(){
+          state.toDisplay = parseInt(b4.id);
+          let container = document.querySelector("#content");
+          container.innerHTML = "";
+          renderOneMeeting();
+        });
+      });
+      row.appendChild(b4)
+      container.appendChild(row);
     });
-    row.appendChild(b4)
-    container.appendChild(row);
   });
 }
 
@@ -128,7 +148,7 @@ function renderTitleDescUsers() {
   secondCol.classList.add("col", "float-right");
   let container = document.querySelector("#content");
   let header = document.createElement('h1');
-  header.innerHTML = "Event: " + state.meetings.get(1).meetingtitle;
+  header.innerHTML = "Event: " + state.meetings.get(state.toDisplay)["MeetingName"];
   let inp = document.createElement("input");
   inp.classList.add("btn", "btn-secondary", "btn-lg", "btn-block", "pull-right");
   inp.setAttribute("type", "submit");
@@ -142,7 +162,7 @@ function renderTitleDescUsers() {
   container.appendChild(firstRow);
   let desc = document.createElement('div');
   desc.classList.add("row");
-  desc.innerHTML = "Description: " + state.meetings.get(1).meetingdesc;
+  desc.innerHTML = "Description: " + state.meetings.get(state.toDisplay)["MeetingDesc"];
   container.appendChild(desc);
   let usrt = document.createElement('h4');
   usrt.classList.add("row");
@@ -151,12 +171,11 @@ function renderTitleDescUsers() {
   let usr = document.createElement('div');
   usr.classList.add("row");
   usr.innerHTML = "";
-  state.meetings.get(1).members.forEach(function (user) {
+  state.meetings.get(state.toDisplay).Members.forEach(function (user) {
     usr.innerHTML = usr.innerHTML + parseInt(user) + ", ";
   });
   usr.innerHTML = usr.innerHTML.substring(0, usr.innerHTML.length - 2);
   container.appendChild(usr);
-
 }
 
 function renderUserPopUp() {
@@ -220,11 +239,8 @@ function renderUserPopUp() {
     toParse.replace(" ", "");
     toParse = toParse.split(",")
     console.log(toParse);
-    sendState(toParse);
-    setState(state.toDisplay);
-    let container = document.querySelector("#content");
-    container.innerHTML = "";
-    renderOneMeeting(state.toDisplay);
+    state.add = toParse;
+    sendState();
   });
   m7.appendChild(b4);
   m7.appendChild(b3);
@@ -271,10 +287,10 @@ function renderTimePopUp() {
   m6.classList.add("modal-body");
   let parent = document.createElement("div")
   parent.classList.add("col")
-  days.forEach(function (day, i) {
+  days.forEach(function (day) {
     let toAdd = document.createElement("div")
     toAdd.classList.add("row")
-    toAdd.innerHTML = JSON.stringify(state.meetings.get(1).freeTime[i]);
+    toAdd.innerHTML = JSON.stringify(state.meetings.get(state.toDisplay)[day]);
     toAdd.innerHTML = toAdd.innerHTML.replace(/[{}""[\]]/g, "")
     parent.appendChild(toAdd);
   });
