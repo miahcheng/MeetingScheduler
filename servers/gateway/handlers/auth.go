@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"path"
 	"strconv"
@@ -13,190 +14,199 @@ import (
 	"info441-finalproj/servers/gateway/sessions"
 )
 
-// UsersHandler handles requestions for users to
-// POST to create a new user account
-func (context HandlerContext) UsersHandler(w http.ResponseWriter, r *http.Request) {
-	reqMeth := r.Method
-	if reqMeth != "POST" {
-		http.Error(w, "Incorrect Status Method", http.StatusMethodNotAllowed)
+func (handler *Handler) UsersHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "Method must be POST", http.StatusMethodNotAllowed)
 		return
 	}
-	header := r.Header.Get("Content-Type")
-
-	if !strings.HasPrefix(header, "application/json") {
-		http.Error(w, "Header request body must be in JSON", http.StatusUnsupportedMediaType)
+	if !strings.HasPrefix(r.Header.Get("Content-Type"), "application/json") {
+		http.Error(w, "Request body must be JSON", http.StatusUnsupportedMediaType)
 		return
 	}
-	dec := json.NewDecoder(r.Body)
-	curUser := &users.NewUser{}
-	dec.Decode(curUser)
-	if valErr := curUser.Validate(); valErr != nil {
-		// fmt.Printf("Error, Invalid user: %v", valErr)
-		http.Error(w, "Error message: "+valErr.Error(), 400)
+	newUser := &users.NewUser{}
+	data, _ := ioutil.ReadAll(r.Body)
+	json.Unmarshal(data, newUser)
+	user, err2 := newUser.ToUser()
+	if err2 != nil {
+		http.Error(w, "Invalid user data", http.StatusBadRequest)
 		return
 	}
-	toValUser, toUserErr := curUser.ToUser()
-	if toUserErr != nil {
-		fmt.Printf("Error creating a User: %v", toUserErr)
+	userRes, insertErr := handler.UserStore.Insert(user)
+	if insertErr != nil {
+		fmt.Println(insertErr)
+		http.Error(w, "User could not be added to the database", http.StatusBadRequest)
+		return
 	}
-	// insert new user into database
-	cur, insertErr := context.UserStore.Insert(toValUser)
-	if cur != toValUser || insertErr != nil {
-		fmt.Printf("Error inserting new user into database: %v", insertErr)
-		http.Error(w, "Error inserting user into database"+insertErr.Error(), 400)
+	state := &SessionState{time.Now(), *userRes}
+	_, sessionErr := sessions.BeginSession(handler.SessionKey, handler.SessionStore, state, w)
+	if sessionErr != nil {
+		http.Error(w, "Session could not be established", http.StatusInternalServerError)
+		return
 	}
-	// begin session
-	sessState := &SessionState{BeginTime: time.Now(), CurrentUser: toValUser}
-	// sessID, _ :=
-	_, begErr := sessions.BeginSession(context.SigningKey, context.SessionStore, sessState, w)
-	if begErr != nil {
-		http.Error(w, "Error beginning session: "+begErr.Error(), http.StatusInternalServerError)
-	}
-	// context.SessionStore.Save(sessID, sessState)
+	userJSON, _ := json.Marshal(userRes)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	if toValUser.ID != cur.ID {
-		fmt.Printf("Error incorrect primary keys")
-	}
-	response, encErr := json.Marshal(toValUser)
-	if encErr != nil {
-		fmt.Printf("error encoding user to JSON: %v", encErr)
-	}
-	w.Write(response)
+	w.Write(userJSON)
 }
 
-// SpecificUserHandler blah
-func (context HandlerContext) SpecificUserHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "GET" && r.Method != "PATCH" {
-		http.Error(w, "Status Method Not Get or Patch", http.StatusMethodNotAllowed)
-		return
-	}
-	idURL := path.Base(r.URL.Path)
+func (handler *Handler) SpecificUserHandler(w http.ResponseWriter, r *http.Request) {
 	state := &SessionState{}
-	var usrID int64
-	_, err := sessions.GetState(r, context.SigningKey, context.SessionStore, state)
-	if err != nil {
-		http.Error(w, "error getting state: "+err.Error(), 401)
+	_, sessionErr := sessions.GetState(r, handler.SessionKey, handler.SessionStore, state)
+	if sessionErr != nil {
+		http.Error(w, "Current user is not authenticated", http.StatusUnauthorized)
 		return
 	}
-	if idURL == "me" {
-		usrID = state.CurrentUser.ID
-	} else {
-		usrID, err = strconv.ParseInt(idURL, 10, 64)
-		if err != nil {
-			http.Error(w, "error parsing id "+err.Error(), 403)
-			return
-		}
-	}
-	curUser, getErr := context.UserStore.GetByID(usrID)
-	if getErr != nil {
-		http.Error(w, "Error getting user "+err.Error(), http.StatusInternalServerError)
-	}
-	// Get method
+	idString := path.Base(r.URL.Path)
+	var id int64
 	if r.Method == "GET" {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		response, _ := json.Marshal(curUser)
-		w.Write(response)
-	} else if r.Method == "PATCH" {
-		if idURL != "me" && usrID != state.CurrentUser.ID {
-			http.Error(w, "Users do not match", http.StatusForbidden)
-		}
-		reqBody := r.Header.Get("Content-Type")
-		if !strings.HasPrefix(reqBody, "application/json") {
-			http.Error(w, "Request Body must be in JSON", http.StatusUnsupportedMediaType)
-			return
-		}
-		dec := json.NewDecoder(r.Body)
-		updates := &users.Updates{}
-		decErr := dec.Decode(updates)
-		if decErr != nil {
-			fmt.Printf("Error decoding json: %v", decErr)
-		}
-		// curUser := state.CurrentUser
-		upUser, upEr := context.UserStore.Update(usrID, updates)
-		if upEr != nil {
-			http.Error(w, "Error updating user: "+upEr.Error(), 400)
-			return
-		}
-		w.WriteHeader(http.StatusOK)
-		w.Header().Set("Content-Type", "application/json")
-		resp, encErr := json.Marshal(upUser)
-		if encErr != nil {
-			fmt.Printf("Error encoding: %v", encErr)
-		}
-		w.Write(resp)
-
-	} else {
-		http.Error(w, "Status Method Not Get or Patch", http.StatusMethodNotAllowed)
-		return
-	}
-}
-
-// SessionsHandler blah
-func (context HandlerContext) SessionsHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "POST" {
-		reqBody := r.Header.Get("Content-Type") // im dumb
-		if !strings.HasPrefix(reqBody, "application/json") {
-			http.Error(w, "Requestion Body must be in JSON", http.StatusUnsupportedMediaType)
-			return
-		}
-		creds := &users.Credentials{}
-		dec := json.NewDecoder(r.Body)
-		decErr := dec.Decode(creds)
-		if decErr != nil {
-			fmt.Printf("Error decoding json: %v", decErr)
-		}
-		curUser, getErr := context.UserStore.GetByEmail(creds.Email)
-		if getErr != nil {
-			time.Sleep(time.Second)
-			http.Error(w, "Invalid Credentials", http.StatusUnauthorized)
-			return
-		}
-		signInTime := time.Now()
-		ipAdd := ""
-		if len(r.Header.Get("X-Forwarded-For")) != 0 {
-			ipAdd = r.Header.Get("X-Forwarded-For")
+		if idString == "me" {
+			id = state.User.ID
 		} else {
-			ipAdd = r.RemoteAddr
+			temp, idErr := strconv.Atoi(idString)
+			if idErr != nil {
+				http.Error(w, "Passed ID was not a valid ID", http.StatusBadRequest)
+				return
+			}
+			id = int64(temp)
 		}
-		context.UserStore.InsertSignIn(curUser, signInTime, ipAdd)
-		authErr := curUser.Authenticate(creds.Password)
-		if authErr != nil {
-			http.Error(w, "Invalid Credentials", http.StatusUnauthorized)
+		user, userErr := handler.UserStore.GetByID(id)
+		if userErr != nil {
+			http.Error(w, "User with passed ID was not found", http.StatusNotFound)
 			return
 		}
-		state := &SessionState{signInTime, curUser}
-		sessions.BeginSession(context.SigningKey, context.SessionStore, state, w)
+		userJSON, _ := json.Marshal(user)
 		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusCreated)
-		resp, encErr := json.Marshal(curUser)
-		if encErr != nil {
-			fmt.Printf("Error encoding: %v", encErr)
+		w.WriteHeader(http.StatusOK)
+		w.Write(userJSON)
+	} else if r.Method == "PATCH" {
+		if idString != "me" {
+			temp, idErr := strconv.Atoi(idString)
+			if idErr != nil {
+				http.Error(w, "Passed ID was not a valid ID", http.StatusBadRequest)
+				return
+			}
+			id = int64(temp)
+			if id != state.User.ID {
+				http.Error(w, "Cannot PATCH user data for non-authenticated user", http.StatusForbidden)
+				return
+			}
 		}
-		w.Write(resp)
+		if !strings.HasPrefix(r.Header.Get("Content-Type"), "application/json") {
+			http.Error(w, "Request body must be JSON", http.StatusUnsupportedMediaType)
+			return
+		}
+		update := &users.Updates{}
+		data, _ := ioutil.ReadAll(r.Body)
+		json.Unmarshal(data, update)
+		updateErr := state.User.ApplyUpdates(update)
+		if updateErr != nil {
+			http.Error(w, "User could not be updated", http.StatusBadRequest)
+			return
+		}
+		userJSON, _ := json.Marshal(state.User)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write(userJSON)
 	} else {
-		http.Error(w, "Status Method is not Post", http.StatusMethodNotAllowed)
+		http.Error(w, "Method must be PATCH or GET", http.StatusMethodNotAllowed)
 		return
 	}
 }
 
-// SpecificSessionHandler balh
-func (context HandlerContext) SpecificSessionHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "DELETE" {
-		path := r.URL.Path
-		if !strings.HasSuffix(path, "mine") {
-			http.Error(w, "Incorrect path to user", http.StatusForbidden)
-			return
-		}
-		_, endErr := sessions.EndSession(r, context.SigningKey, context.SessionStore)
-		if endErr != nil {
-			http.Error(w, "Error ending sessions: "+endErr.Error(), http.StatusInternalServerError)
-			return
-		}
-		w.Write([]byte("signed out"))
-	} else {
-		http.Error(w, "Incorrect Status Method", http.StatusMethodNotAllowed)
+func (handler *Handler) SessionsHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "Method must be POST", http.StatusMethodNotAllowed)
 		return
 	}
+	if !strings.HasPrefix(r.Header.Get("Content-Type"), "application/json") {
+		http.Error(w, "Request body must be JSON", http.StatusUnsupportedMediaType)
+		return
+	}
+	creds := &users.Credentials{}
+	data, _ := ioutil.ReadAll(r.Body)
+	json.Unmarshal(data, creds)
+	user, userErr := handler.UserStore.GetByEmail(creds.Email)
+	if userErr != nil {
+		http.Error(w, "Invalid Credentials", http.StatusUnauthorized)
+		return
+	}
+	authErr := user.Authenticate(creds.Password)
+	if authErr != nil {
+		http.Error(w, "Invalid Credentials", http.StatusUnauthorized)
+		return
+	}
+	state := &SessionState{}
+	state.Time = time.Now()
+	state.User = *user
+	ip := r.RemoteAddr
+	if len(r.Header.Get("X-Forwarded-For")) != 0 {
+		ips := strings.Split(ip, ", ")
+		ip = ips[0]
+	}
+	handler.UserStore.TrackLogin(user.ID, ip, state.Time)
+	sessions.BeginSession(handler.SessionKey, handler.SessionStore, state, w)
+	userJSON, _ := json.Marshal(state.User)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	w.Write(userJSON)
+}
+
+func (handler *Handler) SpecificSessionHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "DELETE" {
+		http.Error(w, "Method must be DELETE", http.StatusMethodNotAllowed)
+		return
+	}
+	if path.Base(r.URL.Path) != "mine" {
+		http.Error(w, "Cannot end someone else's session!", http.StatusForbidden)
+		return
+	}
+	_, sessionErr := sessions.EndSession(r, handler.SessionKey, handler.SessionStore)
+	if sessionErr != nil {
+		http.Error(w, "Could not end session", http.StatusInternalServerError)
+		return
+	}
+	w.Write([]byte("signed out"))
+}
+
+func (handler *Handler) GetUserInfoHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "GET" {
+		http.Error(w, "Method must be GET", http.StatusMethodNotAllowed)
+		return
+	}
+	state := &SessionState{}
+	_, sessionErr := sessions.GetState(r, handler.SessionKey, handler.SessionStore, state)
+	if sessionErr != nil {
+		http.Error(w, "Current user is not authenticated", http.StatusUnauthorized)
+		return
+	}
+	idString := path.Base(r.URL.Path)
+	temp, idErr := strconv.Atoi(idString)
+	if idErr != nil {
+		http.Error(w, "Passed ID was not a valid ID", http.StatusBadRequest)
+		return
+	}
+	id := int64(temp)
+	user, err := handler.UserStore.GetByID(id)
+	if err != nil {
+		http.Error(w, "Could not find user", http.StatusBadRequest)
+	}
+	userInfo := &struct {
+		id        int64
+		Email     string
+		FirstName string
+		LastName  string
+	}{
+		user.ID,
+		user.Email,
+		user.FirstName,
+		user.LastName,
+	}
+	json, jsonErr := json.Marshal(userInfo)
+	if jsonErr != nil {
+		http.Error(w, "Issue with encoding JSON", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	w.Write(json)
 }

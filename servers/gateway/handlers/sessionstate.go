@@ -1,14 +1,11 @@
 package handlers
 
 import (
-	"time"
-
 	"info441-finalproj/servers/gateway/models/users"
+	"time"
 )
 
-// SessionState instantiates the time the Current User begins
-// their session
 type SessionState struct {
-	BeginTime   time.Time
-	CurrentUser *users.User
+	Time time.Time  `json:"time"`
+	User users.User `json:"user"`
 }

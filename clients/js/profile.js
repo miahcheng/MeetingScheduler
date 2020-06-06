@@ -78,3 +78,10 @@ fetch(base + "/user/",
     card.appendChild(cardbod);
     userFree.appendChild(card);
 });
+
+window.logoutUser = function() {
+    document.getElementById("logoutUser").addEventListener("click", (event) => {
+        sessionStorage.setItem("auth", "");
+        window.location.href="index.html";
+    })
+}
