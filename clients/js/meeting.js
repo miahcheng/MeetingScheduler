@@ -3,35 +3,39 @@ let state = {
   // key would be meetingID, holds struct:
   // {creatorID, members, meeting desc}
   toDisplay: null,
+  toDisplayUsers: new Map(),
   add: []
 };
 const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const base = "https://api.jimhua32.me";
-let testing = {
-  meetingID: 1,
-  creatorID: 3,
-  members: [1, 2, 3],
-  meetingtitle: "stuff to do",
-  meetingdesc: "doing stuff",
-  freeTime: days.map(function (someValue) {
-    var tmp = {};
-    tmp[someValue] = ["100", "200", "400"];
-    return tmp;
-  })
-}
-let testing1 = {
-  meetingID: 2,
-  creatorID: 3,
-  members: [1, 2, 3],
-  meetingtitle: "stuff to do2",
-  meetingdesc: "doing stuff",
-  freeTime: days.map(function (someValue) {
-    var tmp = {};
-    tmp[someValue] = ["100", "200", "400"];
-    return tmp;
-  })
-}
-
+function getuser(id, callback){
+  let i = 0;
+  state.meetings.get(id).Members.forEach(function(memid){
+    fetch(base + "/getuser/" + parseInt(memid),
+      {
+          method: "GET",
+          headers: {
+              "Authorization": sessionStorage.getItem("auth"),
+          }
+      }
+    ).then(response => {
+      if (response.status == 401 || response.status == 405) {
+        console.log("Error getting meeting information");
+      }
+      return response.json();
+    }).then(response => {
+        i = i + 1;
+        console.log(state.meetings.get(id).Members.length)
+        console.log(i);
+        response.id = memid;
+        state.toDisplayUsers.set(memid, response);
+        console.log(state.toDisplayUsers);
+        if (i === state.meetings.get(id).Members.length){
+          callback();
+        }
+      })
+    })
+};
 function setState(callback) {
   state.auth = sessionStorage.getItem("auth");
   console.log(state.auth);
@@ -49,7 +53,6 @@ function setState(callback) {
     }
     return response.json();
   }).then(response => {
-    console.log(response);
     let user = response;
   //Get user
   //Get meetingID
@@ -73,7 +76,6 @@ function setState(callback) {
         callback();
       })
     });
-
   });
 }
 function sendState() {
@@ -110,7 +112,6 @@ function renderMeetingList() {
     console.log(state.meetings);
     let container = document.querySelector("#content");
     state.meetings.forEach(function (meeting) {
-      console.log(meeting)
       let row = document.createElement('div')
       row.classList.add("row");
       let b4 = document.createElement("button");
@@ -134,9 +135,11 @@ function renderMeetingList() {
 
 function renderOneMeeting() {
   document.getElementById("submitcon").style.display = "block";
-  renderTitleDescUsers();
-  renderTimePopUp();
-  renderUserPopUp();
+  getuser(state.toDisplay, function(){
+    renderTitleDescUsers();
+    renderTimePopUp();
+    renderUserPopUp();
+  });
 }
 
 function renderTitleDescUsers() {
@@ -171,8 +174,9 @@ function renderTitleDescUsers() {
   let usr = document.createElement('div');
   usr.classList.add("row");
   usr.innerHTML = "";
-  state.meetings.get(state.toDisplay).Members.forEach(function (user) {
-    usr.innerHTML = usr.innerHTML + parseInt(user) + ", ";
+  console.log(state.toDisplayUsers);
+  state.toDisplayUsers.forEach(function (user) {
+    usr.innerHTML = usr.innerHTML + user.FirstName + " " + user.LastName + ", ";
   });
   usr.innerHTML = usr.innerHTML.substring(0, usr.innerHTML.length - 2);
   container.appendChild(usr);
