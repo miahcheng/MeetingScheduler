@@ -37,8 +37,6 @@ function getuser(id, callback){
     })
 };
 function setState(callback) {
-  state.auth = sessionStorage.getItem("auth");
-  console.log(state.auth);
   fetch(base + "/user/",
       {
           method: "GET",
@@ -72,7 +70,7 @@ function setState(callback) {
         i = i+1;
         response.id = id;
         state.meetings.set(id, response);
-        console.log(state.meetings.get(id).Members)
+        console.log(state.meetings);
         if (i === user.Meetings.length) {
           callback();
         }
@@ -109,6 +107,10 @@ function sendState() {
 }
 
 function renderMeetingList() {
+  console.log("okk")
+  state.toDisplay = 0;
+  let container = document.querySelector("#content");
+  container.innerHTML = "";
   setState(function() {
     document.getElementById("submitcon").style.display = "none";
     console.log(state.meetings);
@@ -166,23 +168,46 @@ function renderTitleDescUsers() {
   firstRow.appendChild(firstCol);
   firstRow.appendChild(secondCol)
   container.appendChild(firstRow);
-  let desc = document.createElement('div');
-  desc.classList.add("row");
+  let desc = document.createElement('h4');
   desc.innerHTML = "Description: " + state.meetings.get(state.toDisplay)["MeetingDesc"];
-  container.appendChild(desc);
-  let usrt = document.createElement('h4');
-  usrt.classList.add("row");
+  firstCol.appendChild(desc);
+  let usrt = document.createElement('h2');
   usrt.innerHTML = "Users:"
-  container.appendChild(usrt);
-  let usr = document.createElement('div');
-  usr.classList.add("row");
+  firstCol.appendChild(usrt)
+  inp = document.createElement("input");
+  inp.classList.add("btn", "btn-secondary", "btn-sm", "btn-block", "pull-right");
+  inp.setAttribute("type", "submit");
+  inp.setAttribute("value", "Delete this Meeting");
+  inp.addEventListener('click', () => {
+    fetch(base + "/meeting/" + parseInt(state.toDisplay),
+        {
+            method: "DELETE",
+            headers: {
+                "Authorization": sessionStorage.getItem("auth"),
+            }
+        }
+    ).then(response => {
+      if (response.status == 400 || response.status == 405 || response.status == 401) {
+        console.log("Error getting user information");
+        console.log(response);
+      }
+      console.log(response);
+      console.log("ok");
+      state.meetings.delete(state.toDisplay);
+      renderMeetingList();
+    })
+  });
+  secondCol.appendChild(inp);
+  let usr = document.createElement('h4');
   usr.innerHTML = "";
-  console.log(state.toDisplayUsers);
   state.toDisplayUsers.forEach(function (user) {
     usr.innerHTML = usr.innerHTML + user.FirstName + " " + user.LastName + ", ";
   });
   usr.innerHTML = usr.innerHTML.substring(0, usr.innerHTML.length - 2);
-  container.appendChild(usr);
+  firstCol.appendChild(usr)
+  firstRow.appendChild(firstCol);
+  firstRow.appendChild(secondCol)
+  container.appendChild(firstRow);
 }
 
 function renderUserPopUp() {
