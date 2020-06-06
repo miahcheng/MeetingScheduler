@@ -226,13 +226,30 @@ func (c *Context) SpecificMeetingHandler(w http.ResponseWriter, r *http.Request)
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("User added successfully"))
 	} else if r.Method == "DELETE" {
-		_, aErr := c.CalendarStore.Exec("DELETE FROM MeetingMembers WHERE MeetingID = ?", meetingID)
-		if aErr != nil {
-			http.Error(w, "Meeting not found", http.StatusBadRequest)
+		holder := &Holder{}
+		row := c.CalendarStore.QueryRow("SELECT CreatorID FROM Meeting WHERE MeetingID = ?", meetingID)
+		scanErr := row.Scan(&holder.userID)
+		if scanErr != nil {
+			http.Error(w, "Error querying database", http.StatusInternalServerError)
+			return
 		}
-		_, deleteErr := c.CalendarStore.Exec("DELETE FROM Meeting WHERE MeetingID = ?", meetingID)
-		if deleteErr != nil {
-			http.Error(w, "Meeting not found", http.StatusBadRequest)
+		if c.UserID == holder.userID {
+			_, aErr := c.CalendarStore.Exec("DELETE FROM MeetingMembers WHERE MeetingID = ?", meetingID)
+			if aErr != nil {
+				http.Error(w, "Meeting not found", http.StatusBadRequest)
+				return
+			}
+			_, deleteErr := c.CalendarStore.Exec("DELETE FROM Meeting WHERE MeetingID = ?", meetingID)
+			if deleteErr != nil {
+				http.Error(w, "Meeting not found", http.StatusBadRequest)
+				return
+			}
+		} else {
+			_, aErr := c.CalendarStore.Exec("DELETE FROM MeetingMembers WHERE MeetingID = ? AND UserID = ?", meetingID, c.UserID)
+			if aErr != nil {
+				http.Error(w, "Meeting or user not found", http.StatusBadRequest)
+				return
+			}
 		}
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("Meeting successfully deleted"))
