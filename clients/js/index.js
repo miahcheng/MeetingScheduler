@@ -140,5 +140,6 @@ button.addEventListener('click', () => {
       state.selected.set(parsed[0], arr);
     }
   });
+    window.alert("Successfully added times")
     sendState();
 });

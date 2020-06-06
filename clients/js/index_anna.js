@@ -57,6 +57,7 @@ document.getElementById("submitLog").addEventListener("click", function(event) {
         if (response.status >= 400) {
             console.log("error logging in user");
             console.log(response);
+            window.alert("Incorrect email or password");
             return;
         } else {
             console.log(response)
@@ -141,17 +142,16 @@ document.getElementById("submitNUser").addEventListener("click", (event) => {
         if (response.status >= 400) {
             console.log("error creating new user account");
             console.log(response);
+            if (response.status === 400) {
+                window.alert("Error creating new user");
+            }
             // return
         }
         console.log(response);
         let token = [];
-        // token = response.headers.get("Authorization").split(" ");
-        // console.log(token);
-        // sessionStorage.setItem("auth", token[1]);
         window.alert("User signed up! Please log in");
         toggleLogin("block", "none");
     });
-    // exports.auth = state.auth;
 });
 
 window.logoutUser = function() {
