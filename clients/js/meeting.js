@@ -54,8 +54,7 @@ function setState(callback) {
     return response.json();
   }).then(response => {
     let user = response;
-  //Get user
-  //Get meetingID
+    let i = 0
     user.Meetings.forEach(function (id) {
     fetch(base + "/meeting/" + parseInt(id),
         {
@@ -70,10 +69,13 @@ function setState(callback) {
       }
       return response.json();
     }).then(response => {
+        i = i+1;
         response.id = id;
         state.meetings.set(id, response);
         console.log(state.meetings.get(id).Members)
-        callback();
+        if (i === user.Meetings.length) {
+          callback();
+        }
       })
     });
   });
@@ -112,6 +114,7 @@ function renderMeetingList() {
     console.log(state.meetings);
     let container = document.querySelector("#content");
     state.meetings.forEach(function (meeting) {
+      console.log("hello");
       let row = document.createElement('div')
       row.classList.add("row");
       let b4 = document.createElement("button");
@@ -295,7 +298,8 @@ function renderTimePopUp() {
     let toAdd = document.createElement("div")
     toAdd.classList.add("row")
     toAdd.innerHTML = JSON.stringify(state.meetings.get(state.toDisplay)[day]);
-    toAdd.innerHTML = toAdd.innerHTML.replace(/[{}""[\]]/g, "")
+    toAdd.innerHTML = toAdd.innerHTML.replace(/[{}""[\]]/g, "");
+    toAdd.innerHTML = day + ":" + toAdd.innerHTML;
     parent.appendChild(toAdd);
   });
   m6.appendChild(parent);
