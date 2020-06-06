@@ -5,6 +5,8 @@ This application is intended to be used by people who need to easily figure out 
 
 # Technical Description
 ![](imgs/revised_diagram.png)
+![](imgs/erd.png)
+
 | Priority | Description |
 | -------- | ----------- |
 | P0 | As a user, I want to be able to input my free times and see where overlap exists |
