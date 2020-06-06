@@ -191,7 +191,7 @@ function renderTitleDescUsers() {
             }
         }
     ).then(response => {
-      if (response.status == 400 || response.status == 405 || response.status == 401) {
+      if (response.status >= 400) {
         console.log("Error getting user information");
         console.log(response);
       }
