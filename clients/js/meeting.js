@@ -25,11 +25,8 @@ function getuser(id, callback){
       return response.json();
     }).then(response => {
         i = i + 1;
-        console.log(state.meetings.get(id).Members.length)
-        console.log(i);
         response.id = memid;
         state.toDisplayUsers.set(memid, response);
-        console.log(state.toDisplayUsers);
         if (i === state.meetings.get(id).Members.length){
           callback();
         }
@@ -70,7 +67,6 @@ function setState(callback) {
         i = i+1;
         response.id = id;
         state.meetings.set(id, response);
-        console.log(state.meetings);
         if (i === user.Meetings.length) {
           callback();
         }
@@ -80,8 +76,6 @@ function setState(callback) {
 }
 function sendState() {
   state.add.forEach(function(email) {
-    console.log(email);
-    console.log(state.toDisplay);
     var obj = {Email: email};
     fetch(base + "/meeting/" + parseInt(state.toDisplay),
         {
@@ -112,10 +106,8 @@ function renderMeetingList() {
   container.innerHTML = "";
   setState(function() {
     document.getElementById("submitcon").style.display = "none";
-    console.log(state.meetings);
     let container = document.querySelector("#content");
     state.meetings.forEach(function (meeting) {
-      console.log("hello");
       let row = document.createElement('div')
       row.classList.add("row");
       let b4 = document.createElement("button");
@@ -273,8 +265,7 @@ function renderUserPopUp() {
   b4.addEventListener('click', () => {
     let toParse = document.querySelector(".form-control").value
     toParse.replace(" ", "");
-    toParse = toParse.split(",")
-    console.log(toParse);
+    toParse = toParse.split(",");
     state.add = toParse;
     sendState();
   });

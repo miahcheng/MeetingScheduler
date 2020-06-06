@@ -63,7 +63,6 @@ function newMap(){
   });
 }
 function setState(){
-  console.log(state.auth);
   if (state.selected.size === 0){
     newMap();
   }
@@ -82,12 +81,9 @@ function setState(){
     }
     return response.json();
   }).then(response => {
-    console.log(response);
     days.forEach(function(day){
       state.selected.set(day, response.Week[day]);
-      console.log(response.Week[day])
     });
-    console.log(state.selected);
     renderOneWeek();
   })
 }
@@ -104,7 +100,7 @@ function sendState(){
     Friday:state.selected.get("Friday"),
     Saturday:state.selected.get("Saturday"),
   }
-  console.log(JSON.stringify(obj))
+ 
   //GET USER, set state.selected to GET USER JSON
   fetch(base + "/user/",
       {
