@@ -36,7 +36,7 @@ This application is intended to be used by people who need to easily figure out 
         * `400`: UserID does not exist
         * `405`: Wrong Method
         * `415`: Wrong content type
-* `GET`; `/meeting/id`: Gets the free times, users, meeting description, meeting title associated with a meeting
+* `GET`; `/meeting/{id}`: Gets the free times, users, meeting description, meeting title associated with a meeting
     * Inputs: Meeting ID (int)
     * Outputs: `application/json`
     * Header: 
@@ -45,7 +45,7 @@ This application is intended to be used by people who need to easily figure out 
         * `200`: `application/json` success
         * `401`: User not authenticated or User doesn't belong in meeting
         * `405`: Wrong Method
-* `DELETE`; `/meeting/id`: Deletes a meeting
+* `DELETE`; `/meeting/{id}`: Deletes a meeting
     * Inputs: Meeting ID (int)
     * Outputs: `text`
     * Header: 
@@ -55,7 +55,7 @@ This application is intended to be used by people who need to easily figure out 
         * `400`: meeting id does not exist
         * `401`: User not authenticated
         * `405`: Wrong Method
-* `POST`; `/meeting/id`: Adds users to a meeting
+* `POST`; `/meeting/{id}`: Adds users to a meeting
     * Inputs: Meeting ID, User ID
     * Outputs: `text`: success message
     * Header: 
