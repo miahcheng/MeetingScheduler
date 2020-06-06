@@ -225,6 +225,17 @@ func (c *Context) SpecificMeetingHandler(w http.ResponseWriter, r *http.Request)
 		w.Header().Set("Content-Type", "string")
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("User added successfully"))
+	} else if r.Method == "DELETE" {
+		_, aErr := c.CalendarStore.Exec("DELETE FROM MeetingMembers WHERE MeetingID = ?", meetingID)
+		if aErr != nil {
+			http.Error(w, "Meeting not found", http.StatusBadRequest)
+		}
+		_, deleteErr := c.CalendarStore.Exec("DELETE FROM Meeting WHERE MeetingID = ?", meetingID)
+		if deleteErr != nil {
+			http.Error(w, "Meeting not found", http.StatusBadRequest)
+		}
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("Meeting successfully deleted"))
 	} else {
 		http.Error(w, "Invalid method", http.StatusMethodNotAllowed)
 		return
