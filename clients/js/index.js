@@ -40,7 +40,6 @@ function renderOneTime(time, amorpm, day) {
   }
   check.id = day + ":" + parsedTime;
   if (state.selected.get(day).includes(parsedTime)){
-    console.log("YES")
     check.checked = true;
   }
   oneTime.appendChild(check);
@@ -99,7 +98,7 @@ function sendState(){
   var obj = {
     Sunday: state.selected.get("Sunday"),
     Monday:state.selected.get("Monday"),
-    Tueday:state.selected.get("Tuesday"),
+    Tuesday:state.selected.get("Tuesday"),
     Wednesday:state.selected.get("Wednesday"),
     Thursday:state.selected.get("Thursday"),
     Friday:state.selected.get("Friday"),
