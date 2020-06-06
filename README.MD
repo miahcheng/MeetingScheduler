@@ -15,7 +15,7 @@ This application is intended to be used by people who need to easily figure out 
 | P5 | As a user, I want to be able to alter my schedule once a meeting is decided |
 
 # Endpoints
-* `GET`; `/user/`: Gets the free times, schedule, and meetings for a user
+* `GET`; `/user/`: Gets the free times, schedule, and meetings for the current user
     * Inputs: None
     * Outputs: `application/json`
     * Header: 
@@ -25,7 +25,7 @@ This application is intended to be used by people who need to easily figure out 
         * `400`: UserID does not exist
         * `401`: User not authenticated
         * `405`: Wrong Method
-* `PATCH`; `/user/`: Adds free time to user's schedule
+* `PATCH`; `/user/`: Updates free time to user's schedule
     * Inputs: `application/json`
     * Outputs: `application/json`
     * Header: 
@@ -44,6 +44,16 @@ This application is intended to be used by people who need to easily figure out 
     * Response Codes:
         * `200`: `application/json` success
         * `401`: User not authenticated or User doesn't belong in meeting
+        * `405`: Wrong Method
+* `DELETE`; `/meeting/id`: Deletes a meeting
+    * Inputs: Meeting ID (int)
+    * Outputs: `text`
+    * Header: 
+        * Authentication: bearer token
+    * Response Codes:
+        * `200`: `application/json` success
+        * `400`: meeting id does not exist
+        * `401`: User not authenticated
         * `405`: Wrong Method
 * `POST`; `/meeting/id`: Adds users to a meeting
     * Inputs: Meeting ID, User ID
